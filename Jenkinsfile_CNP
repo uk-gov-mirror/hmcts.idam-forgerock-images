@@ -1,0 +1,22 @@
+@Library('Infrastructure') _
+
+env.GIT_URL = 'https://github.com/hmcts/idam-forgerock-images'
+
+properties([
+        parameters([
+        ])
+])
+
+
+/*
+The plan:
+TODO: set-up / configuration
+TODO: pull configuration from repository
+TODO: replace variables/tokens in configuration
+TODO: build AM Docker image
+TODO: build DS Docker image
+TODO: build IDM Docker image
+TODO: make Docker building parallel if possible
+TODO: push Docker images to target registry (if required)
+TODO: make sure GIT_URL points to the actual GitHub URL
+ */

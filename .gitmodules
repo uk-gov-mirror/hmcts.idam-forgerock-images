@@ -1,0 +1,3 @@
+[submodule "cnp-idam-packer"]
+	path = cnp-idam-packer
+	url = git@github.com:hmcts/cnp-idam-packer.git
