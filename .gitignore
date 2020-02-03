@@ -1,6 +1,6 @@
 .idea/
 
 # Forbid binary files in the repository, these need to be copied in manually
-bin/*.war
-bin/*.zip
+**/*.war
+**/*.zip
 

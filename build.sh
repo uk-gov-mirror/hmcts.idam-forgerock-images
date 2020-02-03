@@ -7,7 +7,10 @@
 DOCKER_TAG_GROUP="forgerock-local"
 
 # The list of required binary files, for help see the README.md file
-FORGEROCK_REQUIRED_BINARIES=(AM-6.5.2.2.war Amster-6.5.2.2.zip DS-6.5.2.zip IDM-6.5.0.2.zip)
+FORGEROCK_AM_FILE=AM-6.5.2.2.war
+FORGEROCK_AMSTER_FILE=Amster-6.5.2.2.zip
+FORGEROCK_DS_FILE=DS-6.5.2.zip
+FORGEROCK_IDM_FILE=IDM-6.5.0.2.zip
 
 # The name of the configuration repository (git submodule)
 CONFIGURATION_REPOSITORY_NAME="cnp-idam-packer"
@@ -19,6 +22,7 @@ CONFIGURATION_BRANCH="master"
 # END OF CONFIGURATION - DO NOT EDIT BELOW THIS LINE
 # (unless you're modifying the script and know what you're doing)
 # ---------------------------------------------------------------
+FORGEROCK_REQUIRED_BINARIES=("$FORGEROCK_AM_FILE" "$FORGEROCK_AMSTER_FILE" "$FORGEROCK_DS_FILE" "$FORGEROCK_IDM_FILE")
 
 # Prints a pretty text header
 function print-pretty-header() { echo -e ">> $1"; }
@@ -64,11 +68,15 @@ echo "====================================="
 check-binary-files-exist
 update-config
 
-cp ./bin/AM-6.5.2.2.war ./am/openam_conf/openam.war
-cp ./bin/Amster-6.5.2.2.zip ./am/openam_conf/amster.zip
+print-pretty-header "Copying \"am\" binary files.."
+cp "./bin/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || exit 1
+cp "./bin/$FORGEROCK_AMSTER_FILE" ./am/openam_conf/amster.zip || exit 1
 build-docker-image "am"
 
+#print-pretty-header "Copying \"ds\" binary files.."
 #build-docker-image "ds"
+#
+#print-pretty-header "Copying \"idm\" binary files.."
 #build-docker-image "idm"
 
 build-docker-image "postgres"
