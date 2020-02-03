@@ -25,7 +25,7 @@ CONFIGURATION_BRANCH="master"
 FORGEROCK_REQUIRED_BINARIES=("$FORGEROCK_AM_FILE" "$FORGEROCK_AMSTER_FILE" "$FORGEROCK_DS_FILE" "$FORGEROCK_IDM_FILE")
 
 # Prints a pretty text header
-function print-pretty-header() { echo -e ">> $1"; }
+function print-pretty-header() { echo -e "\n>> $1"; }
 
 # Builds a Docker image using Dockerfile present in a provided directory
 function build-docker-image() {
@@ -78,6 +78,7 @@ cp "./bin/$FORGEROCK_DS_FILE" ./ds/opendj.zip || exit 1
 build-docker-image "ds"
 
 print-pretty-header "Copying \"idm\" binary files.."
+cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
 build-docker-image "idm"
 
-#build-docker-image "postgres"
+build-docker-image "postgres"
