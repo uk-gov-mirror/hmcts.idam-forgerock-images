@@ -4,7 +4,7 @@
 # -------------------------
 
 # The group part of Docker image tag used to tag generated files
-DOCKER_TAG_GROUP="forgerock-local"
+DOCKER_TAG_GROUP="fr-local"
 
 # The list of required binary files, for help see the README.md file
 FORGEROCK_AM_FILE=AM-6.5.2.2.war
@@ -55,17 +55,20 @@ function check-binary-files-exist() {
   echo "OK"
 }
 
-function cleanup() {
-  print-pretty-header "Cleaning up..."
+function prepare() {
+  print-pretty-header "Cleaning up leftover files from the previous run..."
   rm -r ./am/openam_conf/config_files ./am/openam_conf/amster.zip ./am/openam_conf/openam.war
+  rm -r ./ds/opendj.zip ./ds/secrets ./ds/bootstrap
+  rm -r "./idm/$FORGEROCK_IDM_FILE" ./idm/security
   echo "OK"
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
-trap cleanup EXIT
 echo "============================================"
 echo "IDAM ForgeRock Docker Images Building Script"
 echo "============================================"
+
+prepare
 
 check-binary-files-exist
 update-config
@@ -73,29 +76,54 @@ update-config
 # ========================
 #            AM
 # ========================
-print-pretty-header "Overlaying \"am\" configuration files.."
+print-pretty-header "Copying AM configuration files.."
 cp -R "./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/config_files" ./am/openam_conf || exit 1
 echo "OK"
 
-print-pretty-header "Copying \"am\" binary files.."
+print-pretty-header "Copying AM binary files.."
 cp "./bin/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || exit 1
 cp "./bin/$FORGEROCK_AMSTER_FILE" ./am/openam_conf/amster.zip || exit 1
 echo "OK"
 
-build-docker-image "am"
+#build-docker-image "am"
 
 # ========================
 #            DS
 # ========================
-#print-pretty-header "Copying \"ds\" binary files.."
-#cp "./bin/$FORGEROCK_DS_FILE" ./ds/opendj.zip || exit 1
+print-pretty-header "Copying DS configuration files.."
+cp -R "./cnp-idam-packer/ansible/roles/forgerock_ds/files/secrets" ./ds/secrets || exit 1
+echo "Pa55word11" > "./ds/secrets/dirmanager.pw" || exit 1
+
+cp -R "./cnp-idam-packer/ansible/roles/forgerock_ds/files/user_store" ./ds/bootstrap || exit 1
+# rename schema ldifs so they are imported before the others
+i=0
+for file in ./ds/bootstrap/user_store/*schema.ldif; do
+  newFilePrefix=$(printf "%02d" $i)
+  echo "Found a schema file: $(basename "$file") -> renaming to ${newFilePrefix}_$(basename "$file")"
+  mv "$file" "$(dirname "$file")/${newFilePrefix}_$(basename "$file")"
+  ((i=i+1))
+done
+
+# TODO: take files from templates, inject into placeholders, then copy
+cp -R "./cnp-idam-packer/ansible/roles/forgerock_ds/templates/cfg_store/*" ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg || exit 1
+cp -R "./cnp-idam-packer/ansible/roles/forgerock_ds/templates/cts_store/*" ./ds/bootstrap/cfg_cts_store/setup_scripts_cts || exit 1
+
+cp "./cnp-idam-packer/ansible/shared-templates/blacklist.txt.j2" ./ds/bootstrap/blacklist.txt || exit 1
+echo "OK"
+
+print-pretty-header "Copying DS binary files.."
+cp "./bin/$FORGEROCK_DS_FILE" ./ds/opendj.zip || exit 1
+echo "OK"
+
 #build-docker-image "ds"
 
 # ========================
 #           IDM
 # ========================
-#print-pretty-header "Copying \"idm\" binary files.."
-#cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
+print-pretty-header "Copying IDM binary files.."
+cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
+echo "OK"
+
 #build-docker-image "idm"
 
 # ========================
