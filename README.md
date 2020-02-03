@@ -13,3 +13,9 @@ The require files are:
 - `IDM-x.x.x.x.zip`
 
 You can download these files from [https://backstage.forgerock.com/downloads/](https://backstage.forgerock.com/downloads/).
+
+## Usage
+
+Currently, the script doesn't require any parameters:
+
+`> ./build.sh`

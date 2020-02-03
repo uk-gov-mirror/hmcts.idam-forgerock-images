@@ -1,0 +1,31 @@
+serverUrl="http://"+System.getenv("OPENAM_HOSTNAME")+":"+System.getenv("OPENAM_PORT")+"/openam"
+password=System.getenv("DEFAULT_PASSWORD")
+ldapHost=System.getenv("CONFIGURATION_LDAP")
+userStoreHost=System.getenv("USER_STORE_HOST")
+ldapPort=System.getenv("CONFIGURATION_LDAP_PORT")
+rootCsf=System.getenv("BASE_DN")
+rootUserStore=System.getenv("BASE_DN")
+rootLdapUser=System.getenv("DEDFAULT_LDAP_USER")
+
+
+install-openam \
+--serverUrl serverUrl \
+--adminPwd password \
+--cfgStore dirServer \
+--cfgStoreHost ldapHost \
+--cfgStoreDirMgr rootLdapUser \
+--cfgStoreDirMgrPwd  password \
+--cfgStoreAdminPort 4444 \
+--cfgStoreJmxPort 1636 \
+--cfgStorePort ldapPort \
+--cfgStoreRootSuffix rootCsf \
+--userStoreType LDAPv3ForOpenDS \
+--userStoreHost userStoreHost \
+--userStorePort ldapPort \
+--userStoreDirMgrPwd password \
+--userStoreDirMgr rootLdapUser \
+--userStoreRootSuffix rootUserStore \
+--acceptLicense \
+
+:exit
+
