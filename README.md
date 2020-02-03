@@ -6,7 +6,7 @@ The goal of this script is to build Docker images containing ForgeRock used in l
 
 In order to build the images you have to put binary ForgeRock files in the `bin/` directory.
 
-The require files are:
+The required files are:
 - `AM-x.x.x.x.war`
 - `Amster-x.x.x.x.zip`
 - `DS-x.x.x.zip`

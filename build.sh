@@ -12,9 +12,6 @@ FORGEROCK_AMSTER_FILE=Amster-6.5.2.2.zip
 FORGEROCK_DS_FILE=DS-6.5.2.zip
 FORGEROCK_IDM_FILE=IDM-6.5.0.2.zip
 
-# The name of the configuration repository (git submodule)
-CONFIGURATION_REPOSITORY_NAME="cnp-idam-packer"
-
 # The name of the branch to take the configuration from (cnp-idam-packer repo)
 CONFIGURATION_BRANCH="master"
 
@@ -37,14 +34,14 @@ function build-docker-image() {
 }
 
 # Performs a git operation on the config sub-module
-function git-config() { git --git-dir="./$CONFIGURATION_REPOSITORY_NAME/.git" $@; }
+function git-config() { git --git-dir="./cnp-idam-packer/.git" $@; }
 
 # Updates the config submodule
 function update-config() {
-  print-pretty-header "Updating config from \"$CONFIGURATION_REPOSITORY_NAME\".."
+  print-pretty-header "Updating config from git submodule ($CONFIGURATION_BRANCH branch).."
   { git-config fetch && git-config merge "origin/$CONFIGURATION_BRANCH"; } || { echo "Git submodule update failed!" && exit 1; }
-  CONFIG_VERSION=$(git-config show --format="%cd" --date=format:%Y.%m.%d_%H.%M.%S)_$CONFIGURATION_BRANCH
-  echo "The configuration is currently at version \"${CONFIG_VERSION}\" (the last commit timestamp + branch)."
+  CONFIG_VERSION=$(git-config show --format="%cd" --date=format:%Y.%m.%d_%H.%M.%S)_${CONFIGURATION_BRANCH}
+  echo "The configuration is currently at version \"${CONFIG_VERSION}\"."
 }
 
 # Makes sure that all the required binary files are present in the bin/ directory
@@ -58,27 +55,50 @@ function check-binary-files-exist() {
   echo "OK"
 }
 
-# ---------------------
-# The build script body
-# ---------------------
+function cleanup() {
+  print-pretty-header "Cleaning up..."
+  rm -r ./am/openam_conf/config_files ./am/openam_conf/amster.zip ./am/openam_conf/openam.war
+  echo "OK"
+}
 
-echo "IDAM Forgerock Images Building Script"
-echo "====================================="
+# ----------------------------------------------------------------------------------------------------------------------
+trap cleanup EXIT
+echo "============================================"
+echo "IDAM ForgeRock Docker Images Building Script"
+echo "============================================"
 
 check-binary-files-exist
 update-config
 
+# ========================
+#            AM
+# ========================
+print-pretty-header "Overlaying \"am\" configuration files.."
+cp -R "./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/config_files" ./am/openam_conf || exit 1
+echo "OK"
+
 print-pretty-header "Copying \"am\" binary files.."
 cp "./bin/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || exit 1
 cp "./bin/$FORGEROCK_AMSTER_FILE" ./am/openam_conf/amster.zip || exit 1
+echo "OK"
+
 build-docker-image "am"
 
-print-pretty-header "Copying \"ds\" binary files.."
-cp "./bin/$FORGEROCK_DS_FILE" ./ds/opendj.zip || exit 1
-build-docker-image "ds"
+# ========================
+#            DS
+# ========================
+#print-pretty-header "Copying \"ds\" binary files.."
+#cp "./bin/$FORGEROCK_DS_FILE" ./ds/opendj.zip || exit 1
+#build-docker-image "ds"
 
-print-pretty-header "Copying \"idm\" binary files.."
-cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
-build-docker-image "idm"
+# ========================
+#           IDM
+# ========================
+#print-pretty-header "Copying \"idm\" binary files.."
+#cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
+#build-docker-image "idm"
 
-build-docker-image "postgres"
+# ========================
+#         POSTGRES
+# ========================
+#build-docker-image "postgres"
