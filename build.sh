@@ -73,10 +73,11 @@ cp "./bin/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || exit 1
 cp "./bin/$FORGEROCK_AMSTER_FILE" ./am/openam_conf/amster.zip || exit 1
 build-docker-image "am"
 
-#print-pretty-header "Copying \"ds\" binary files.."
-#build-docker-image "ds"
-#
-#print-pretty-header "Copying \"idm\" binary files.."
-#build-docker-image "idm"
+print-pretty-header "Copying \"ds\" binary files.."
+cp "./bin/$FORGEROCK_DS_FILE" ./ds/opendj.zip || exit 1
+build-docker-image "ds"
 
-build-docker-image "postgres"
+print-pretty-header "Copying \"idm\" binary files.."
+build-docker-image "idm"
+
+#build-docker-image "postgres"

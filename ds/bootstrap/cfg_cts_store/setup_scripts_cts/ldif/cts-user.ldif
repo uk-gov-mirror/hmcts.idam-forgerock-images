@@ -1,0 +1,19 @@
+dn: ou=admins,CTS_BASE_DN
+objectClass: top
+objectClass: organizationalunit
+ou: OpenAM Administrator
+
+dn: uid=OPENAM_CTS_USERNAME,ou=admins,CTS_BASE_DN
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: OpenAM Non-Admin-User
+sn: OpenAM
+userPassword: OPENAM_PASSWORD
+ds-privilege-name: update-schema
+ds-privilege-name: subentry-write
+ds-privilege-name: password-reset
+ds-privilege-name: unindexed-search
+ds-rlim-lookthrough-limit: 0
+ds-rlim-size-limit: 5000
