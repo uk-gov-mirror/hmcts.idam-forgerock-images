@@ -4,16 +4,16 @@
 # -------------------------
 
 # The group part of Docker image tag used to tag generated files
-DOCKER_TAG_GROUP="fr-local"
+: ${DOCKER_TAG_GROUP:=fr-local}
 
 # The list of required binary files, for help see the README.md file
-FORGEROCK_AM_FILE=AM-6.5.2.2.war
-FORGEROCK_AMSTER_FILE=Amster-6.5.2.2.zip
-FORGEROCK_DS_FILE=DS-6.5.2.zip
-FORGEROCK_IDM_FILE=IDM-6.5.0.2.zip
+: ${FORGEROCK_AM_FILE:=AM-6.5.2.2.war}
+: ${FORGEROCK_AMSTER_FILE:=Amster-6.5.2.2.zip}
+: ${FORGEROCK_DS_FILE:=DS-6.5.2.zip}
+: ${FORGEROCK_IDM_FILE:=IDM-6.5.0.2.zip}
 
 # The name of the branch to take the configuration from (cnp-idam-packer repo)
-CONFIGURATION_BRANCH="master"
+: ${CONFIGURATION_BRANCH:=master}
 
 # ---------------------------------------------------------------
 # END OF CONFIGURATION - DO NOT EDIT BELOW THIS LINE
