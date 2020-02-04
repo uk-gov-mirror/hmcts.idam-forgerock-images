@@ -61,7 +61,6 @@ function prepare() {
   rm -r ./ds/opendj.zip ./ds/secrets ./ds/bootstrap
   rm -r "./idm/$FORGEROCK_IDM_FILE" ./idm/security
   echo "OK"
-#  exit 0
 }
 
 function search-and-replace() {
@@ -96,7 +95,6 @@ echo "OK"
 # ========================
 #            DS
 # ========================
-#set -o xtrace
 
 print-pretty-header "Copying DS configuration files.."
 cp -R ./cnp-idam-packer/ansible/roles/forgerock_ds/files/secrets ./ds/secrets || exit 1
@@ -104,6 +102,7 @@ echo "Pa55word11" >./ds/secrets/dirmanager.pw || exit 1
 
 mkdir -p ./ds/bootstrap/
 cp -R ./cnp-idam-packer/ansible/roles/forgerock_ds/files/user_store ./ds/bootstrap/ || exit 1
+
 # rename schema ldifs so they are imported before the others
 i=0
 for file in ./ds/bootstrap/user_store/*schema.ldif; do
@@ -116,13 +115,19 @@ done
 mkdir -p ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg ./ds/bootstrap/cfg_cts_store/setup_scripts_cts || exit 1
 cp -R ./cnp-idam-packer/ansible/roles/forgerock_ds/templates/cfg_store/* ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg || exit 1
 cp -R ./cnp-idam-packer/ansible/roles/forgerock_ds/templates/cts_store/* ./ds/bootstrap/cfg_cts_store/setup_scripts_cts || exit 1
-for file in ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg/*.sh.j2 ./ds/bootstrap/cfg_cts_store/setup_scripts_cts/*.sh.j2; do
+
+# delete 00-runme.sh.j2, superseded by 00-runme.sh which changes the script run order
+rm ./ds/bootstrap/cfg_cts_store/setup_scripts_cts/00-runme.sh.j2 || exit 1
+
+for file in ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg/*.sh.j2 \
+  ./ds/bootstrap/cfg_cts_store/setup_scripts_cts/*.sh.j2 \
+  ./ds/bootstrap/cfg_cts_store/setup_scripts_cts/00-runme.sh; do
   search-and-replace "{{ opendj_home }}" '\$CFG_SCRIPTS\/\.\.' "$file"
   search-and-replace "--port 4444" '--port \$ADMIN_PORT' "$file"
   search-and-replace "{{ baseDN }}" '\$BASE_DN' "$file"
   search-and-replace "{{ bindDN }}" '\$USER' "$file"
   search-and-replace "--bindDN \"cn=Directory Manager\"" '--bindDN \"\$USER\"' "$file"
-  search-and-replace "BINDPASSWD" '\$PASSWORD' "$file"
+  search-and-replace "{{ BINDPASSWD }}" '\$PASSWORD' "$file"
   search-and-replace "\/opt\/opendj" '\$OPENDJ_ROOT' "$file"
   search-and-replace "--port 1389" '--port \$LDAP_PORT' "$file"
   search-and-replace "--hostname localhost" '--hostname \$DSHOSTNAME' "$file"
@@ -137,16 +142,15 @@ for file in ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg/*.ldif.j2 ./ds/bootst
   search-and-replace "{{ openam_cts_username }}" 'OPENAM_CTS_USERNAME' "$file"
   search-and-replace "{{ cts_baseDN }}" 'CTS_BASE_DN' "$file"
   search-and-replace "{{ openam_cts_password }}" 'OPENAM_PASSWORD' "$file"
+  search-and-replace "{{ openam_password }}" 'OPENAM_PASSWORD' "$file"
 done
 
-# delete 00-runme.sh.j2, superseded by 00-runme.sh which changes the script run order
-rm ./ds/bootstrap/cfg_cts_store/setup_scripts_cts/00-runme.sh.j2 || exit 1
-
-# todo: rename
+# strip all .j2 files of its suffix
 for file in ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg/*.j2 ./ds/bootstrap/cfg_cts_store/setup_scripts_cts/*.j2; do
   mv -- "$file" "${file%.j2}" || exit 1
 done
 
+# get the pwd blacklist
 cp ./cnp-idam-packer/ansible/shared-templates/blacklist.txt.j2 ./ds/bootstrap/blacklist.txt || exit 1
 echo "OK"
 
