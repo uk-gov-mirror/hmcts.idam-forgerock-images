@@ -30,15 +30,20 @@ function build-docker-image() {
   [ -f "$1/Dockerfile" ] || { echo "No Dockerfile found in directory \"$1\"!" && exit 1; }
   DOCKER_TAG_FINAL="${DOCKER_TAG_GROUP}-${1}:${CONFIG_VERSION}"
   echo "Building the image and tagging as \"$DOCKER_TAG_FINAL\"."
-  docker build --tag "$DOCKER_TAG_FINAL" "./$1" || { echo "Docker build FAILED!" && exit 1; }
+  #  docker build --tag "$DOCKER_TAG_FINAL" "./$1" || { echo "Docker build FAILED!" && exit 1; }
 }
 
 # Performs a git operation on the config sub-module
 function git-config() { git --git-dir="./cnp-idam-packer/.git" $@; }
 
+# Return the current git branch
+function git-branch() { git-config rev-parse --abbrev-ref HEAD; }
+
 # Updates the config submodule
 function update-config() {
-  print-pretty-header "Updating config from git submodule ($CONFIGURATION_BRANCH branch).."
+  print-pretty-header "Updating config from git submodule.."
+  CURR_BRANCH="$(git-branch)"
+  [ "$CURR_BRANCH" = "$CONFIGURATION_BRANCH" ] || { echo "The current branch of the configuration repository is \"$CURR_BRANCH\", expected: \"$CONFIGURATION_BRANCH\"" && exit 1; }
   { git-config fetch && git-config merge "origin/$CONFIGURATION_BRANCH"; } || { echo "Git submodule update failed!" && exit 1; }
   CONFIG_VERSION=$(git-config show --format="%cd" --date=format:%Y.%m.%d_%H.%M.%S)_${CONFIGURATION_BRANCH}
   echo "The configuration is currently at version \"${CONFIG_VERSION}\"."
@@ -65,7 +70,7 @@ function prepare() {
 
 function search-and-replace() {
   sed -i '' "s/$1/$2/" "$3" || exit 1
-#  true;
+  #  true;
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -90,18 +95,21 @@ cp "./bin/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || exit 1
 cp "./bin/$FORGEROCK_AMSTER_FILE" ./am/openam_conf/amster.zip || exit 1
 echo "OK"
 
-#build-docker-image "am"
+build-docker-image "am"
 
 # ========================
 #            DS
 # ========================
 
 print-pretty-header "Copying DS configuration files.."
-cp -R ./cnp-idam-packer/ansible/roles/forgerock_ds/files/secrets ./ds/secrets || exit 1
+DS_SRC="./cnp-idam-packer/ansible/roles/forgerock_ds"
+DS_TRG="./ds/bootstrap/cfg_cts_store"
+
+cp -R $DS_SRC/files/secrets ./ds/secrets || exit 1
 echo "Pa55word11" >./ds/secrets/dirmanager.pw || exit 1
 
 mkdir -p ./ds/bootstrap/
-cp -R ./cnp-idam-packer/ansible/roles/forgerock_ds/files/user_store ./ds/bootstrap/ || exit 1
+cp -R $DS_SRC/files/user_store ./ds/bootstrap/ || exit 1
 
 # rename schema ldifs so they are imported before the others
 i=0
@@ -112,16 +120,16 @@ for file in ./ds/bootstrap/user_store/*schema.ldif; do
   ((i = i + 1))
 done
 
-mkdir -p ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg ./ds/bootstrap/cfg_cts_store/setup_scripts_cts || exit 1
-cp -R ./cnp-idam-packer/ansible/roles/forgerock_ds/templates/cfg_store/* ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg || exit 1
-cp -R ./cnp-idam-packer/ansible/roles/forgerock_ds/templates/cts_store/* ./ds/bootstrap/cfg_cts_store/setup_scripts_cts || exit 1
+mkdir -p $DS_TRG/setup_scripts_cfg $DS_TRG/setup_scripts_cts || exit 1
+cp -R $DS_SRC/templates/cfg_store/* $DS_TRG/setup_scripts_cfg || exit 1
+cp -R $DS_SRC/templates/cts_store/* $DS_TRG/setup_scripts_cts || exit 1
 
 # delete 00-runme.sh.j2, superseded by 00-runme.sh which changes the script run order
-rm ./ds/bootstrap/cfg_cts_store/setup_scripts_cts/00-runme.sh.j2 || exit 1
+rm $DS_TRG/setup_scripts_cts/00-runme.sh.j2 || exit 1
 
-for file in ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg/*.sh.j2 \
-  ./ds/bootstrap/cfg_cts_store/setup_scripts_cts/*.sh.j2 \
-  ./ds/bootstrap/cfg_cts_store/setup_scripts_cts/00-runme.sh; do
+for file in $DS_TRG/setup_scripts_cfg/*.sh.j2 \
+  $DS_TRG/setup_scripts_cts/*.sh.j2 \
+  $DS_TRG/setup_scripts_cts/00-runme.sh; do
   search-and-replace "{{ opendj_home }}" '\$CFG_SCRIPTS\/\.\.' "$file"
   search-and-replace "--port 4444" '--port \$ADMIN_PORT' "$file"
   search-and-replace "{{ baseDN }}" '\$BASE_DN' "$file"
@@ -135,7 +143,7 @@ for file in ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg/*.sh.j2 \
   search-and-replace "{{ openam_cts_username }}" '\$OPENAM_CTS_USERNAME' "$file"
   search-and-replace "{{ cts_baseDN }}" '\$CTS_BASE_DN' "$file"
 done
-for file in ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg/*.ldif.j2 ./ds/bootstrap/cfg_cts_store/setup_scripts_cts/*.ldif.j2; do
+for file in $DS_TRG/setup_scripts_cfg/*.ldif.j2 $DS_TRG/setup_scripts_cts/*.ldif.j2; do
   search-and-replace "{{ opendj_home }}" 'CFG_SCRIPTS\/\.\.' "$file"
   search-and-replace "{{ baseDN }}" 'BASE_DN' "$file"
   search-and-replace "{{ openam_username }}" 'OPENAM_USERNAME' "$file"
@@ -146,7 +154,7 @@ for file in ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg/*.ldif.j2 ./ds/bootst
 done
 
 # strip all .j2 files of its suffix
-for file in ./ds/bootstrap/cfg_cts_store/setup_scripts_cfg/*.j2 ./ds/bootstrap/cfg_cts_store/setup_scripts_cts/*.j2; do
+for file in $DS_TRG/setup_scripts_cfg/*.j2 $DS_TRG/setup_scripts_cts/*.j2; do
   mv -- "$file" "${file%.j2}" || exit 1
 done
 
@@ -158,7 +166,7 @@ print-pretty-header "Copying DS binary files.."
 cp "./bin/$FORGEROCK_DS_FILE" ./ds/opendj.zip || exit 1
 echo "OK"
 
-#build-docker-image "ds"
+build-docker-image "ds"
 
 # ========================
 #           IDM
@@ -167,9 +175,19 @@ print-pretty-header "Copying IDM binary files.."
 cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
 echo "OK"
 
-#build-docker-image "idm"
+print-pretty-header "Copying IDM configuration files.."
+IDM_SRC="./cnp-idam-packer/ansible/roles/forgerock_idm"
+cp $IDM_SRC/templates/access.js.j2 ./idm/script/access.js || exit 1
+cp $IDM_SRC/templates/policy.js.j2 ./idm/script/policy.js || exit 1
+cp $IDM_SRC/templates/sunset.js.j2 ./idm/script/sunset.js || exit 1
+# remove lines starting with {%
+sed -i '' '/^{%/ d' ./idm/script/sunset.js || exit 1
+# todo: all the rest of the configuration needs to be checked if it's correct
+echo "OK"
+
+build-docker-image "idm"
 
 # ========================
 #         POSTGRES
 # ========================
-#build-docker-image "postgres"
+build-docker-image "postgres"
