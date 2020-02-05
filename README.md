@@ -1,6 +1,14 @@
 # IDAM ForgeRock Images Builder
 
 The goal of this script is to build Docker images containing ForgeRock used for local development.
+The following images/services are included:
+
+- ForgeRock AM
+- ForgeRock DS
+- ForgeRock IDM
+- Postgres shared database
+
+This repository uses the `cnp-idam-packer` repository (as git submodule) to source the FR configuration from.
 
 ## Prerequisites
 
@@ -25,7 +33,7 @@ Currently, the script doesn't require any parameters:
 ### Overriding the default configuration branch
 
 By default, the script assumes that the configuration is taken from the `master` branch of the config repository.
-If the currently checked-out branch is not what is expected, the script will stop. The script will quietly ignore all the local changes to the repository.
+If the currently checked-out branch in the git submodule is not what is expected, the script will stop. The script will also quietly ignore all the local changes to the repository.
 
 If you want to use another branch, you can override this env variable:
 
@@ -56,4 +64,4 @@ By default, the script tags all the Docker images using `fr-local` prefix. You c
 DOCKER_IMAGE_PREFIX=my-local-forgerock ./build.sh
 ```
 
-The script additionally tags all the images with `latest`.
+The script additionally tags all the images with `latest`, which is used in the provded `docker-compose` file(s).
