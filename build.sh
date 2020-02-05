@@ -30,7 +30,7 @@ function build-docker-image() {
   [ -f "$1/Dockerfile" ] || { echo "No Dockerfile found in directory \"$1\"!" && exit 1; }
   DOCKER_TAG_FINAL="${DOCKER_TAG_GROUP}-${1}:${CONFIG_VERSION}"
   echo "Building the image and tagging as \"$DOCKER_TAG_FINAL\"."
-  #  docker build --tag "$DOCKER_TAG_FINAL" "./$1" || { echo "Docker build FAILED!" && exit 1; }
+  docker build --tag "$DOCKER_TAG_FINAL" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
 }
 
 # Performs a git operation on the config sub-module
@@ -64,7 +64,7 @@ function prepare() {
   print-pretty-header "Cleaning up leftover files from the previous run..."
   rm -r ./am/openam_conf/config_files ./am/openam_conf/amster.zip ./am/openam_conf/openam.war
   rm -r ./ds/opendj.zip ./ds/secrets ./ds/bootstrap
-  rm -r "./idm/$FORGEROCK_IDM_FILE" ./idm/security
+  rm -r "./idm/$FORGEROCK_IDM_FILE"
   echo "OK"
 }
 
