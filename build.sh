@@ -4,7 +4,7 @@
 # -------------------------
 
 # The group part of Docker image tag used to tag generated files
-: ${DOCKER_TAG_GROUP:=fr-local}
+: ${DOCKER_IMAGE_PREFIX:=fr-local}
 
 # The list of required binary files, for help see the README.md file
 : ${FORGEROCK_AM_FILE:=AM-6.5.2.2.war}
@@ -28,9 +28,10 @@ function print-pretty-header() { echo -e "\n>> $1"; }
 function build-docker-image() {
   print-pretty-header "Building Docker image for \"$1\""
   [ -f "$1/Dockerfile" ] || { echo "No Dockerfile found in directory \"$1\"!" && exit 1; }
-  DOCKER_TAG_FINAL="${DOCKER_TAG_GROUP}-${1}:${CONFIG_VERSION}"
+  DOCKER_TAG_FINAL="${DOCKER_IMAGE_PREFIX}-${1}:${CONFIG_VERSION}"
+  DOCKER_TAG_LATEST="${DOCKER_IMAGE_PREFIX}-${1}:latest"
   echo "Building the image and tagging as \"$DOCKER_TAG_FINAL\"."
-  docker build --tag "$DOCKER_TAG_FINAL" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
+  docker build --tag "$DOCKER_TAG_FINAL" --tag "$DOCKER_TAG_LATEST" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
 }
 
 # Performs a git operation on the config sub-module

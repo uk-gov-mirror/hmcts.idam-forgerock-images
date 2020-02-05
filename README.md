@@ -53,5 +53,7 @@ If you want to change the versions permanently (e.g. FR upgrade), it is recommen
 By default, the script tags all the Docker images using `fr-local` prefix. You can override it by setting the following env variable:
 
 ```shell script
-DOCKER_TAG_GROUP=my-local-forgerock ./build.sh
+DOCKER_IMAGE_PREFIX=my-local-forgerock ./build.sh
 ```
+
+The script additionally tags all the images with `latest`.

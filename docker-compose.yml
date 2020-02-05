@@ -1,0 +1,43 @@
+---
+
+version: '3.0'
+services:
+  userstore:
+    image: fr-local-ds:latest
+    environment:
+      - DS_TYPE=userstore
+    hostname: userstore
+  cfgAndCts:
+    image: fr-local-ds:latest
+    environment:
+      - DS_TYPE=cfgAndCts
+    hostname: cfgAndCts
+  fr-idm:
+    image: fr-local-idm:latest
+    hostname: fr-idm
+  fr-am:
+    image: fr-local-am:latest
+    hostname: fr-am
+    depends_on:
+     - userstore
+     - cfgAndCts
+#  shared-db:
+#    image: hmctsprivate.azurecr.io/idam/shared-db:latest
+  shared-db:
+    image: fr-local-postgres:latest
+    restart: always
+  smtp-server:
+    image: mailhog/mailhog
+  # idam-api:
+  #   image: hmctspublic.azurecr.io/idam/api:stable
+  #   depends_on:
+  #     - fr-am
+  #     - shared-db
+  # idam-web-public:
+  #   image: hmctspublic.azurecr.io/idam/web-public:stable
+  #   depends_on:
+  #     - idam-api
+  # idam-web-admin:
+  #   image: hmctspublic.azurecr.io/idam/web-admin:stable
+  #   depends_on:
+  #     - idam-api
