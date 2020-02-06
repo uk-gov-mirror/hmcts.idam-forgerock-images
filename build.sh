@@ -30,14 +30,14 @@ function build-docker-image() {
   [ -f "$1/Dockerfile" ] || { echo "No Dockerfile found in directory \"$1\"!" && exit 1; }
   DOCKER_TAG_FINAL="${DOCKER_IMAGE_PREFIX}-${1}:${CONFIG_VERSION}"
   DOCKER_TAG_LATEST="${DOCKER_IMAGE_PREFIX}-${1}:latest"
-  echo "Building the image and tagging as \"$DOCKER_TAG_FINAL\"."
+  echo "Building the image and tagging as \"$DOCKER_TAG_FINAL\" and \"$DOCKER_TAG_FINAL\"."
   docker build --tag "$DOCKER_TAG_FINAL" --tag "$DOCKER_TAG_LATEST" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
 }
 
 # Performs a git operation on the config sub-module
 function git-config() { git --git-dir="./cnp-idam-packer/.git" $@; }
 
-# Return the current git branch
+# Returns the current git branch
 function git-branch() { git-config rev-parse --abbrev-ref HEAD; }
 
 # Updates the config submodule
