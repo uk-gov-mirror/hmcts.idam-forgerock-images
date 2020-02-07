@@ -13,7 +13,7 @@
 : ${FORGEROCK_IDM_FILE:=IDM-6.5.0.2.zip}
 
 # The name of the branch to take the configuration from (cnp-idam-packer repo)
-: ${CONFIGURATION_BRANCH:=master}
+: ${CONFIGURATION_BRANCH:=preview}
 
 # ---------------------------------------------------------------
 # END OF CONFIGURATION - DO NOT EDIT BELOW THIS LINE
@@ -30,7 +30,7 @@ function build-docker-image() {
   [ -f "$1/Dockerfile" ] || { echo "No Dockerfile found in directory \"$1\"!" && exit 1; }
   DOCKER_TAG_FINAL="${DOCKER_IMAGE_PREFIX}-${1}:${CONFIG_VERSION}"
   DOCKER_TAG_LATEST="${DOCKER_IMAGE_PREFIX}-${1}:latest"
-  echo "Building the image and tagging as \"$DOCKER_TAG_FINAL\" and \"$DOCKER_TAG_FINAL\"."
+  echo "Building the image and tagging as \"$DOCKER_TAG_FINAL\" and \"$DOCKER_TAG_LATEST\"."
   docker build --tag "$DOCKER_TAG_FINAL" --tag "$DOCKER_TAG_LATEST" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
 }
 
@@ -45,7 +45,7 @@ function update-config() {
   print-pretty-header "Updating config from git submodule.."
   CURR_BRANCH="$(git-branch)"
   [ "$CURR_BRANCH" = "$CONFIGURATION_BRANCH" ] || { echo "The current branch of the configuration repository is \"$CURR_BRANCH\", expected: \"$CONFIGURATION_BRANCH\"" && exit 1; }
-  { git-config fetch && git-config merge "origin/$CONFIGURATION_BRANCH"; } || { echo "Git submodule update failed!" && exit 1; }
+  { git-config fetch && git-config pull; } || { echo "Git submodule update failed!" && exit 1; }
   CONFIG_VERSION=$(git-config show --format="%cd" --date=format:%Y.%m.%d_%H.%M.%S)_${CONFIGURATION_BRANCH}
   echo "The configuration is currently at version \"${CONFIG_VERSION}\"."
 }
@@ -88,7 +88,9 @@ update-config
 #            AM
 # ========================
 print-pretty-header "Copying AM configuration files.."
-cp -R "./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/config_files" ./am/openam_conf || exit 1
+AM_SRC="./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/config_files"
+[ "$CONFIGURATION_BRANCH" = "preview" ] && AM_SRC="./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files"
+cp -R $AM_SRC ./am/openam_conf || exit 1
 echo "OK"
 
 print-pretty-header "Copying AM binary files.."
@@ -154,6 +156,9 @@ for file in $DS_TRG/setup_scripts_cfg/*.ldif.j2 $DS_TRG/setup_scripts_cts/*.ldif
   search-and-replace "{{ openam_password }}" 'OPENAM_PASSWORD' "$file"
 done
 
+# check for the files still containing {{
+find "$DS_TRG" -type f -print0 | xargs grep "{{"
+
 # strip all .j2 files of its suffix
 for file in $DS_TRG/setup_scripts_cfg/*.j2 $DS_TRG/setup_scripts_cts/*.j2; do
   mv -- "$file" "${file%.j2}" || exit 1
@@ -172,10 +177,6 @@ build-docker-image "ds"
 # ========================
 #           IDM
 # ========================
-print-pretty-header "Copying IDM binary files.."
-cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
-echo "OK"
-
 print-pretty-header "Copying IDM configuration files.."
 IDM_SRC="./cnp-idam-packer/ansible/roles/forgerock_idm"
 cp $IDM_SRC/templates/access.js.j2 ./idm/script/access.js || exit 1
@@ -184,6 +185,11 @@ cp $IDM_SRC/templates/sunset.js.j2 ./idm/script/sunset.js || exit 1
 # remove lines starting with {%
 sed -i '' '/^{%/ d' ./idm/script/sunset.js || exit 1
 # todo: all the rest of the configuration needs to be checked if it's correct
+
+echo "OK"
+
+print-pretty-header "Copying IDM binary files.."
+cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
 echo "OK"
 
 build-docker-image "idm"

@@ -32,13 +32,13 @@ Currently, the script doesn't require any parameters:
 
 ### Overriding the default configuration branch
 
-By default, the script assumes that the configuration is taken from the `master` branch of the config repository.
+By default, the script assumes that the configuration is taken from the `preview` branch of the config repository.
 If the currently checked-out branch in the git submodule is not what is expected, the script will stop. The script will also quietly ignore all the local changes to the repository.
 
 If you want to use another branch, you can override this env variable:
 
 ```shell script
-CONFIGURATION_BRANCH=preview ./build.sh
+CONFIGURATION_BRANCH=master ./build.sh
 ```
 
 ### Overriding the default binaries versions
