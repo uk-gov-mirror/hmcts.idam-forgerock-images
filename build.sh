@@ -74,6 +74,17 @@ function search-and-replace() {
   #  true;
 }
 
+# checks for the files still containing {{
+function find-unprocessed-ansible-files() {
+  UNPROCESSED_FILES=$(find "$1" -type f -print0 | xargs -0 grep -l "{{")
+  [ -z "$UNPROCESSED_FILES" ] || {
+    echo "Files still containing Ansible variable placeholders have been found:"
+    echo "$UNPROCESSED_FILES" | tr " " "\n"
+    echo "Please review the files and make necessary changes to the script."
+    exit 1
+  }
+}
+
 # ----------------------------------------------------------------------------------------------------------------------
 echo "============================================"
 echo "IDAM ForgeRock Docker Images Building Script"
@@ -156,8 +167,7 @@ for file in $DS_TRG/setup_scripts_cfg/*.ldif.j2 $DS_TRG/setup_scripts_cts/*.ldif
   search-and-replace "{{ openam_password }}" 'OPENAM_PASSWORD' "$file"
 done
 
-# check for the files still containing {{
-find "$DS_TRG" -type f -print0 | xargs grep "{{"
+find-unprocessed-ansible-files "$DS_TRG"
 
 # strip all .j2 files of its suffix
 for file in $DS_TRG/setup_scripts_cfg/*.j2 $DS_TRG/setup_scripts_cts/*.j2; do
