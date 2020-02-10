@@ -1,0 +1,5 @@
+all:
+  hosts:
+    am:
+      ansible_connection: docker
+      ansible_python_interpreter: python

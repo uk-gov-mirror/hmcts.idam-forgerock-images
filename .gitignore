@@ -4,8 +4,5 @@
 **/*.war
 **/*.zip
 
-# Forbid any configuration files that are due to be copied in by the script
-ds/bootstrap/
-ds/secrets/
-am/openam_conf/config_files/
-idm/script/
+# Working folder
+work/

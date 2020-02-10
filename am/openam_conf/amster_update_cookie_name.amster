@@ -1,8 +1,0 @@
-serverUrl="http://"+System.getenv("OPENAM_HOSTNAME")+":"+System.getenv("OPENAM_PORT")+"/openam"
-amsterKey=System.getenv("FORGEROCK_HOME")+"/openam/amster_rsa"
-amsterConfigFiles=System.getenv("FORGEROCK_HOME")+"/amster/config_files"
-
-connect serverUrl -k amsterKey
-update DefaultSecurityProperties --global --body '{"amconfig.header.cookie":{"com.iplanet.am.cookie.name":"Idam.Session","com.iplanet.am.cookie.encode":false,"com.iplanet.am.cookie.secure":false}}'
-
-:exit

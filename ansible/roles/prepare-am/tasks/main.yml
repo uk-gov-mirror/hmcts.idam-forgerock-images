@@ -1,0 +1,21 @@
+---
+- include_role:
+    name: roles/tomcat
+    tasks_from: tom_users
+    apply:
+      tags:
+        - master
+
+- include_role:
+    name: roles/tomcat
+    tasks_from: tomcat_setup
+    apply:
+      tags:
+        - master
+
+- include_role:
+    name: roles/forgerock_am
+    tasks_from: configure-am
+    apply:
+      tags:
+        - master
