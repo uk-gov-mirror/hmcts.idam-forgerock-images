@@ -31,7 +31,7 @@ function build-docker-image() {
   DOCKER_TAG_FINAL="${DOCKER_IMAGE_PREFIX}-${1}:${CONFIG_VERSION}"
   DOCKER_TAG_LATEST="${DOCKER_IMAGE_PREFIX}-${1}:latest"
   echo "Building the image and tagging as \"$DOCKER_TAG_FINAL\" and \"$DOCKER_TAG_LATEST\"."
-  docker build --tag "$DOCKER_TAG_FINAL" --tag "$DOCKER_TAG_LATEST" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
+  #  docker build --tag "$DOCKER_TAG_FINAL" --tag "$DOCKER_TAG_LATEST" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
 }
 
 # Performs a git operation on the config sub-module
@@ -192,9 +192,42 @@ IDM_SRC="./cnp-idam-packer/ansible/roles/forgerock_idm"
 cp $IDM_SRC/templates/access.js.j2 ./idm/script/access.js || exit 1
 cp $IDM_SRC/templates/policy.js.j2 ./idm/script/policy.js || exit 1
 cp $IDM_SRC/templates/sunset.js.j2 ./idm/script/sunset.js || exit 1
+
+#   - { src: 'boot.properties.j2', dest: '{{idam_path}}/openidm/resolver/boot.properties' }
+#    - { src: 'repo.jdbc-postgresql-managed-user.json.j2', dest: '/opt/idm/openidm/conf/repo.jdbc.json' }
+#    - { src: 'selfservice-registration.json.j2', dest: '{{idam_path}}/openidm/conf/selfservice-registration.json' }
+#    - { src: 'selfservice-reset.json.j2', dest: '{{idam_path}}/openidm/conf/selfservice-reset.json' }
+#    - { src: 'sync.json.j2', dest: '{{idam_path}}/openidm/conf/sync.json' }
+#    - { src: 'authentication.json.j2', dest: '{{idam_path}}/openidm/conf/authentication.json' }
+#    - { src: 'provisioner.openicf-ldap.json.j2', dest: '{{idam_path}}/openidm/conf/provisioner.openicf-ldap.json' }
+#    - { src: 'external.email.json.j2', dest: '{{idam_path}}/openidm/conf/external.email.json' }
+#    - { src: 'ui-configuration.json.j2', dest: '{{idam_path}}/openidm/conf/ui-configuration.json' }
+#    - { src: 'emailTemplate-welcome.json.j2', dest: '{{idam_path}}/openidm/conf/emailTemplate-welcome.json' }
+#    - { src: 'managed.json.j2', dest: '{{idam_path}}/openidm/conf/managed.json' }
+#    - { src: 'schedule-sunset-task.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-sunset-task.json' }
+#    - { src: 'schedule-reconcile-accounts.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-reconcile-accounts.json' }
+#    - { src: 'schedule-reconcile-roles.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-reconcile-roles.json' }
+#    - { src: 'sunset.js.j2', dest: '{{idam_path}}/openidm/script/sunset.js' }
+#    - { src: 'policy.js.j2', dest: '{{idam_path}}/openidm/bin/defaults/script/policy.js' }
+#    - { src: '../../shared-templates/blacklist.txt.j2', dest: '{{idam_path}}/openidm/conf/blacklist.txt' }
+#    - { src: 'endpoint-notify.json.j2', dest: '{{idam_path}}/openidm/conf/endpoint-notify.json' }
+#    - { src: 'script.json.j2', dest: '{{idam_path}}/openidm/conf/script.json' }
+#    - { src: 'access.js.j2', dest: '{{idam_path}}/openidm/script/access.js' }
+#    - { src: 'notify.groovy.j2', dest: '{{idam_path}}/openidm/script/notify.groovy' }
+#    - { src: 'audit.json.j2', dest: '{{idam_path}}/openidm/conf/audit.json' }
+#    - { src: 'idm_keystore.sh.j2', dest: '/opt/idam/idm_keystore.sh' }
+#    - { src: 'upload_keystore.sh.j2', dest: '/opt/idam/upload_keystore.sh' }
+#    - { src: 'download_keystore.sh.j2', dest: '/opt/idam/download_keystore.sh' }
+
 # remove lines starting with {%
 sed -i '' '/^{%/ d' ./idm/script/sunset.js || exit 1
 # todo: all the rest of the configuration needs to be checked if it's correct
+
+cp $IDM_SRC/templates/* ./idm/conf || exit 1
+# strip all .j2 files of its suffix
+for file in ./idm/conf/*.j2; do
+  mv -- "$file" "${file%.j2}" || exit 1
+done
 
 echo "OK"
 
