@@ -19,17 +19,16 @@ services:
   fr-am.local:
     ports:
       - 8181:8080
-      - 8443:8443
-#  fr-idm:
-#    ports:
-#      - 8081:8080
-#  shared-db:
-#    ports:
-#      - 5432:5432
-#  smtp-server:
-#    ports:
-#      - 1025:1025
-#      - 8025:8025
+  fr-idm:
+    ports:
+      - 8081:8080
+  shared-db:
+    ports:
+      - 5432:5432
+  smtp-server:
+    ports:
+      - 1025:1025
+      - 8025:8025
   # idam-api:
   #   ports:
   #     - 5000:5000
