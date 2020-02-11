@@ -4,3 +4,6 @@
 [submodule "forgeops"]
 	path = forgeops
 	url = git@github.com:hmcts/forgeops.git
+[submodule "forgeops-init"]
+	path = forgeops-init
+	url = git@github.com:hmcts/forgeops-init.git

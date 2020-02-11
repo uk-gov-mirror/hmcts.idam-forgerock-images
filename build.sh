@@ -4,10 +4,6 @@ FR_VERSION=6.5.2
 
 # ======================================================================================================================
 # ======================================================================================================================
-function qecho() {
-  [ "$OPTION_QUIET" = "true" ] || echo $@
-}
-
 function title() {
   echo -e "==> $1"
 }
@@ -19,7 +15,7 @@ function check_dependency() {
 }
 
 function check_dependencies() {
-  title "Checking dependencies..."
+  echo "Checking dependencies..."
   #todo
   check_dependency git
   check_dependency docker
@@ -27,24 +23,23 @@ function check_dependencies() {
   check_dependency helm
   check_dependency kubectx
   check_dependency stern
+  check_dependency minikube
+  check_dependency kubens
+  check_dependency VirtualBox
 }
 
 function require_api_key() {
   [ -z "$FR_API_KEY" ] && { echo "This operation requires the FR_API_KEY variable!" && exit 1; }
-  qecho "Found FR_API_KEY."
+  echo "Found FR_API_KEY."
 }
 
 function show_help() {
-  printf "Usage: %s [-q] command\n" "$0"
-  echo "Options:"
-  echo -e "\tq\tQuiet"
-  echo
-  echo "Where command is one of:"
-  #todo
-}
-
-function initialise() {
-  title "Initialising..."
+  padding=20
+  printf "Usage: %s command\n" "$0"
+  printf "Where command is one of:\n"
+  printf "\t%-${padding}s\tBuilds a base downloader Docker Image, required for building all other images.\n" "build-downloader"
+  printf "\t%-${padding}s\tBuilds all required ForgeRock Docker Images, required a Downloader image as a base image.\n" "build-fr-all"
+  printf "\t%-${padding}s\tDeploys ForgeRock locally using Minikube. All images need to be built beforehand.\n" "deploy"
   #todo
 }
 
@@ -65,27 +60,29 @@ function build_fr_all() {
   docker build --tag forgerock/ds:$FR_VERSION -f forgeops/docker/ds/Dockerfile forgeops/docker/ds || exit 1
 }
 
+function deploy() {
+  title "Deploying ForgeRock locally using Minikube..."
+  check_dependencies
+  title "Starting a Minikube cluster.."
+  #  minikube start --memory=8192 --disk-size=30g --vm-driver=virtualbox --bootstrapper kubeadm --kubernetes-version=v1.17.2 || exit 1
+  title "Enabling Minikube Ingress Controller..."
+  minikube addons enable ingress || exit 1
+  title "Installing the CustomResourceDefinition resources..."
+  kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/v0.13.0/deploy/manifests/00-crds.yaml || exit 1
+  title "Adding JetStack Helm repository..."
+  helm repo add jetstack https://charts.jetstack.io || exit 1
+  title "Updating local Helm chart cache..."
+  helm repo update || exit 1
+  title "Installing the Certificate Manager..."
+  helm install cert-manager jetstack/cert-manager --namespace kube-system --version v0.13.0 || exit 1
+  title "Creating a Kubernetes namespace..."
+  kubectl create namespace forgerock-local || exit 1
+  title "Switching namespaces..."
+  kubens my-namespace
+}
+
 # ======================================================================================================================
 # ======================================================================================================================
-OPTIND=1 # Reset in case getopts has been used previously in the shell.
-# initialise variables
-OPTION_QUIET=false
-
-while getopts "h?q" option; do
-  case "$option" in
-  h | \?)
-    show_help
-    exit 0
-    ;;
-  q)
-    OPTION_QUIET=true
-    ;;
-  esac
-done
-
-shift $((OPTIND - 1))
-[ "${1:-}" = "--" ] && shift
-
 # extract the COMMAND
 case "$1" in
 "")
@@ -93,14 +90,17 @@ case "$1" in
   show_help
   exit 1
   ;;
-init)
-  initialise
-  ;;
 build-downloader)
   build_downloader
+  exit 0
   ;;
 build-fr-all)
   build_fr_all
+  exit 0
+  ;;
+deploy)
+  deploy
+  exit 0
   ;;
 *)
   echo "Unknown command \"$1\"!"
@@ -108,11 +108,3 @@ build-fr-all)
   exit 1
   ;;
 esac
-
-# ======================================================================================================================
-# ======================================================================================================================
-
-#check_dependencies
-
-#title "Applying workaround for Minikube..."
-#minikube ssh sudo ip link set docker0 promisc on
