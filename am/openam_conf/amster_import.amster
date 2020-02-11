@@ -2,7 +2,7 @@
 amHttpProtocol=System.getenv("HTTP_STRING")
 ldapProtocol=System.getenv("LDAP_PROTOCOL")
 
-CFG_STORE_PORT
+
 //
 ctsHost=System.getenv("CTS_CFG_HOSTS")
 cfgUserStoreHost=System.getenv("CFG_STORE_HOST")
