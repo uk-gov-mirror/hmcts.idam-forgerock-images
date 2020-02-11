@@ -28,9 +28,9 @@ function check_dependencies() {
   check_dependency VirtualBox
 }
 
-function require_api_key() {
-  [ -z "$FR_API_KEY" ] && { echo "This operation requires the FR_API_KEY variable!" && exit 1; }
-  echo "Found FR_API_KEY."
+function require_variable() {
+  [ -z "${!1}" ] && { echo "This operation requires the \"$1\" variable which was not found (or was empty)!" && exit 1; }
+  echo "Found \$${1}."
 }
 
 function show_help() {
@@ -45,7 +45,7 @@ function show_help() {
 
 function build_downloader() {
   title "Building the ForgeRock downloader Docker Image.."
-  require_api_key
+  require_variable "FR_API_KEY"
   docker build --no-cache --build-arg API_KEY=$FR_API_KEY --tag forgerock/downloader -f forgeops/docker/downloader/Dockerfile forgeops/docker/downloader || exit 1
 }
 
@@ -63,22 +63,54 @@ function build_fr_all() {
 function deploy() {
   title "Deploying ForgeRock locally using Minikube..."
   check_dependencies
+
   title "Starting a Minikube cluster.."
   #  minikube start --memory=8192 --disk-size=30g --vm-driver=virtualbox --bootstrapper kubeadm --kubernetes-version=v1.17.2 || exit 1
+
   title "Enabling Minikube Ingress Controller..."
   minikube addons enable ingress || exit 1
+
   title "Installing the CustomResourceDefinition resources..."
   kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/v0.13.0/deploy/manifests/00-crds.yaml || exit 1
+
   title "Adding JetStack Helm repository..."
   helm repo add jetstack https://charts.jetstack.io || exit 1
+
   title "Updating local Helm chart cache..."
   helm repo update || exit 1
+
   title "Installing the Certificate Manager..."
-  helm install cert-manager jetstack/cert-manager --namespace kube-system --version v0.13.0 || exit 1
+  if [[ "$(helm list -q --namespace kube-system)" == *"cert-manager"* ]]; then
+    echo "Already installed."
+  else
+    helm install cert-manager jetstack/cert-manager --namespace kube-system --version v0.13.0 || exit 1
+  fi
+
   title "Creating a Kubernetes namespace..."
-  kubectl create namespace forgerock-local || exit 1
+  if [ -z "$(kubectl get namespaces | grep forgerock-local)" ]; then
+    kubectl create namespace forgerock-local || exit 1
+  else
+    echo "Namespace already exists."
+  fi
+
   title "Switching namespaces..."
-  kubens my-namespace
+  kubens forgerock-local || exit 1
+  
+  title "Configuring the Configuration Repository Private Key..."
+  require_variable CONFIG_REPO_PRIVATE_KEY_PATH
+  [[ "$CONFIG_REPO_PRIVATE_KEY_PATH" == *"id_rsa" ]] || { echo "The CONFIG_REPO_PRIVATE_KEY_PATH must end with id_rsa!" && exit 1; }
+  if [ -f "$CONFIG_REPO_PRIVATE_KEY_PATH" ]; then
+    cp -v "$CONFIG_REPO_PRIVATE_KEY_PATH" forgeops/helm/frconfig/secrets || exit 1
+  else
+    echo "File not found: $CONFIG_REPO_PRIVATE_KEY_PATH"
+    exit 1
+  fi
+
+  title "Installing frconfig Helm Chart..."
+  helm install frconfig forgeops/helm/frconfig --values frconfig.yaml || exit 1
+
+  title "Cleaning up..."
+  rm -v forgeops/helm/frconfig/secrets/id_rsa || exit 1
 }
 
 # ======================================================================================================================

@@ -1,0 +1,4 @@
+domain: .my-domain.com
+git:
+  repo: git@github.com:hmcts/forgeops-config.git
+  branch: master
