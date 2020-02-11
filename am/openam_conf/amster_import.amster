@@ -2,7 +2,7 @@
 amHttpProtocol=System.getenv("HTTP_STRING")
 ldapProtocol=System.getenv("LDAP_PROTOCOL")
 
-
+CFG_STORE_PORT
 //
 ctsHost=System.getenv("CTS_CFG_HOSTS")
 cfgUserStoreHost=System.getenv("CFG_STORE_HOST")
@@ -52,8 +52,6 @@ ssoProxyUrl="https://"+System.getenv("ANSIBLE_HOSTNAME")+"."+System.getenv("DOMA
 serverUrl="http://"+System.getenv("OPENAM_HOSTNAME")+":8080/openam"
 amsterKey=System.getenv("FORGEROCK_HOME")+"/openam/amster_rsa"
 amsterConfigFiles=System.getenv("FORGEROCK_HOME")+"/amster/config_files"
-// openam_hostname=System.getenv("OPENAM_HOSTNAME")
-// openam_port=System.getenv("OPENAM_PORT")
 
 
 connect -k amsterKey serverUrl

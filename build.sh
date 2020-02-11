@@ -31,13 +31,13 @@ function build-docker-image() {
   DOCKER_TAG_FINAL="${DOCKER_IMAGE_PREFIX}-${1}:${CONFIG_VERSION}"
   DOCKER_TAG_LATEST="${DOCKER_IMAGE_PREFIX}-${1}:latest"
   echo "Building the image and tagging as \"$DOCKER_TAG_FINAL\" and \"$DOCKER_TAG_LATEST\"."
-  #  docker build --tag "$DOCKER_TAG_FINAL" --tag "$DOCKER_TAG_LATEST" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
+  docker build --tag "$DOCKER_TAG_FINAL" --tag "$DOCKER_TAG_LATEST" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
 }
 
 # Performs a git operation on the config sub-module
-function git-config() { git --git-dir="./cnp-idam-packer/.git" $@; }
+function git-config() { git --git-dir="../cnp-idam-packer/.git" $@; }
 
-# Returns the current git branch
+# Return the current git branch
 function git-branch() { git-config rev-parse --abbrev-ref HEAD; }
 
 # Updates the config submodule
@@ -93,15 +93,14 @@ echo "============================================"
 prepare
 
 check-binary-files-exist
-update-config
+#update-config
 
 # ========================
 #            AM
 # ========================
 print-pretty-header "Copying AM configuration files.."
-AM_SRC="./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/config_files"
-[ "$CONFIGURATION_BRANCH" = "preview" ] && AM_SRC="./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files"
-cp -R $AM_SRC ./am/openam_conf || exit 1
+cp -R "../cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/" am/openam_conf/config_files/ || exit 1
+cp -R tools/local_secrets/* ./am/secrets || exit 1
 echo "OK"
 
 print-pretty-header "Copying AM binary files.."
@@ -116,10 +115,10 @@ build-docker-image "am"
 # ========================
 
 print-pretty-header "Copying DS configuration files.."
-DS_SRC="./cnp-idam-packer/ansible/roles/forgerock_ds"
+DS_SRC="../cnp-idam-packer/ansible/roles/forgerock_ds"
 DS_TRG="./ds/bootstrap/cfg_cts_store"
 
-cp -R $DS_SRC/files/secrets ./ds/secrets || exit 1
+cp -R tools/local_secrets/ ./ds/secrets || exit 1
 echo "Pa55word11" >./ds/secrets/dirmanager.pw || exit 1
 
 mkdir -p ./ds/bootstrap/
@@ -141,33 +140,31 @@ cp -R $DS_SRC/templates/cts_store/* $DS_TRG/setup_scripts_cts || exit 1
 # delete 00-runme.sh.j2, superseded by 00-runme.sh which changes the script run order
 rm $DS_TRG/setup_scripts_cts/00-runme.sh.j2 || exit 1
 
-for file in $DS_TRG/setup_scripts_cfg/*.sh.j2 \
-  $DS_TRG/setup_scripts_cts/*.sh.j2 \
-  $DS_TRG/setup_scripts_cts/00-runme.sh; do
-  search-and-replace "{{ opendj_home }}" '\$CFG_SCRIPTS\/\.\.' "$file"
-  search-and-replace "--port 4444" '--port \$ADMIN_PORT' "$file"
-  search-and-replace "{{ baseDN }}" '\$BASE_DN' "$file"
-  search-and-replace "{{ bindDN }}" '\$USER' "$file"
-  search-and-replace "--bindDN \"cn=Directory Manager\"" '--bindDN \"\$USER\"' "$file"
-  search-and-replace "{{ BINDPASSWD }}" '\$PASSWORD' "$file"
-  search-and-replace "\/opt\/opendj" '\$OPENDJ_ROOT' "$file"
-  search-and-replace "--port 1389" '--port \$LDAP_PORT' "$file"
-  search-and-replace "--hostname localhost" '--hostname \$DSHOSTNAME' "$file"
-  search-and-replace "{{ openam_username }}" '\$OPENAM_USERNAME' "$file"
-  search-and-replace "{{ openam_cts_username }}" '\$OPENAM_CTS_USERNAME' "$file"
-  search-and-replace "{{ cts_baseDN }}" '\$CTS_BASE_DN' "$file"
-done
-for file in $DS_TRG/setup_scripts_cfg/*.ldif.j2 $DS_TRG/setup_scripts_cts/*.ldif.j2; do
-  search-and-replace "{{ opendj_home }}" 'CFG_SCRIPTS\/\.\.' "$file"
-  search-and-replace "{{ baseDN }}" 'BASE_DN' "$file"
-  search-and-replace "{{ openam_username }}" 'OPENAM_USERNAME' "$file"
-  search-and-replace "{{ openam_cts_username }}" 'OPENAM_CTS_USERNAME' "$file"
-  search-and-replace "{{ cts_baseDN }}" 'CTS_BASE_DN' "$file"
-  search-and-replace "{{ openam_cts_password }}" 'OPENAM_PASSWORD' "$file"
-  search-and-replace "{{ openam_password }}" 'OPENAM_PASSWORD' "$file"
-done
-
-find-unprocessed-ansible-files "$DS_TRG"
+#for file in $DS_TRG/setup_scripts_cfg/*.sh.j2 \
+#  $DS_TRG/setup_scripts_cts/*.sh.j2 \
+#  $DS_TRG/setup_scripts_cts/00-runme.sh; do
+#  search-and-replace "{{ opendj_home }}" '\$CFG_SCRIPTS\/\.\.' "$file"
+#  search-and-replace "--port 4444" '--port \$ADMIN_PORT' "$file"
+#  search-and-replace "{{ baseDN }}" '\$BASE_DN' "$file"
+#  search-and-replace "{{ bindDN }}" '\$USER' "$file"
+#  search-and-replace "--bindDN \"cn=Directory Manager\"" '--bindDN \"\$USER\"' "$file"
+#  search-and-replace "{{ BINDPASSWD }}" '\$PASSWORD' "$file"
+#  search-and-replace "\/opt\/opendj" '\$OPENDJ_ROOT' "$file"
+#  search-and-replace "--port 1389" '--port \$LDAP_PORT' "$file"
+#  search-and-replace "--hostname localhost" '--hostname \$DSHOSTNAME' "$file"
+#  search-and-replace "{{ openam_username }}" '\$OPENAM_USERNAME' "$file"
+#  search-and-replace "{{ openam_cts_username }}" '\$OPENAM_CTS_USERNAME' "$file"
+#  search-and-replace "{{ cts_baseDN }}" '\$CTS_BASE_DN' "$file"
+#done
+#for file in $DS_TRG/setup_scripts_cfg/*.ldif.j2 $DS_TRG/setup_scripts_cts/*.ldif.j2; do
+#  search-and-replace "{{ opendj_home }}" 'CFG_SCRIPTS\/\.\.' "$file"
+#  search-and-replace "{{ baseDN }}" 'BASE_DN' "$file"
+#  search-and-replace "{{ openam_username }}" 'OPENAM_USERNAME' "$file"
+#  search-and-replace "{{ openam_cts_username }}" 'OPENAM_CTS_USERNAME' "$file"
+#  search-and-replace "{{ cts_baseDN }}" 'CTS_BASE_DN' "$file"
+#  search-and-replace "{{ openam_cts_password }}" 'OPENAM_PASSWORD' "$file"
+#  search-and-replace "{{ openam_password }}" 'OPENAM_PASSWORD' "$file"
+#done
 
 # strip all .j2 files of its suffix
 for file in $DS_TRG/setup_scripts_cfg/*.j2 $DS_TRG/setup_scripts_cts/*.j2; do
@@ -175,7 +172,7 @@ for file in $DS_TRG/setup_scripts_cfg/*.j2 $DS_TRG/setup_scripts_cts/*.j2; do
 done
 
 # get the pwd blacklist
-cp ./cnp-idam-packer/ansible/shared-templates/blacklist.txt.j2 ./ds/bootstrap/blacklist.txt || exit 1
+cp ../cnp-idam-packer/ansible/shared-templates/blacklist.txt.j2 ./ds/bootstrap/blacklist.txt || exit 1
 echo "OK"
 
 print-pretty-header "Copying DS binary files.."
@@ -187,52 +184,18 @@ build-docker-image "ds"
 # ========================
 #           IDM
 # ========================
+print-pretty-header "Copying IDM binary files.."
+cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
+echo "OK"
+
 print-pretty-header "Copying IDM configuration files.."
 IDM_SRC="./cnp-idam-packer/ansible/roles/forgerock_idm"
 cp $IDM_SRC/templates/access.js.j2 ./idm/script/access.js || exit 1
 cp $IDM_SRC/templates/policy.js.j2 ./idm/script/policy.js || exit 1
 cp $IDM_SRC/templates/sunset.js.j2 ./idm/script/sunset.js || exit 1
-
-#   - { src: 'boot.properties.j2', dest: '{{idam_path}}/openidm/resolver/boot.properties' }
-#    - { src: 'repo.jdbc-postgresql-managed-user.json.j2', dest: '/opt/idm/openidm/conf/repo.jdbc.json' }
-#    - { src: 'selfservice-registration.json.j2', dest: '{{idam_path}}/openidm/conf/selfservice-registration.json' }
-#    - { src: 'selfservice-reset.json.j2', dest: '{{idam_path}}/openidm/conf/selfservice-reset.json' }
-#    - { src: 'sync.json.j2', dest: '{{idam_path}}/openidm/conf/sync.json' }
-#    - { src: 'authentication.json.j2', dest: '{{idam_path}}/openidm/conf/authentication.json' }
-#    - { src: 'provisioner.openicf-ldap.json.j2', dest: '{{idam_path}}/openidm/conf/provisioner.openicf-ldap.json' }
-#    - { src: 'external.email.json.j2', dest: '{{idam_path}}/openidm/conf/external.email.json' }
-#    - { src: 'ui-configuration.json.j2', dest: '{{idam_path}}/openidm/conf/ui-configuration.json' }
-#    - { src: 'emailTemplate-welcome.json.j2', dest: '{{idam_path}}/openidm/conf/emailTemplate-welcome.json' }
-#    - { src: 'managed.json.j2', dest: '{{idam_path}}/openidm/conf/managed.json' }
-#    - { src: 'schedule-sunset-task.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-sunset-task.json' }
-#    - { src: 'schedule-reconcile-accounts.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-reconcile-accounts.json' }
-#    - { src: 'schedule-reconcile-roles.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-reconcile-roles.json' }
-#    - { src: 'sunset.js.j2', dest: '{{idam_path}}/openidm/script/sunset.js' }
-#    - { src: 'policy.js.j2', dest: '{{idam_path}}/openidm/bin/defaults/script/policy.js' }
-#    - { src: '../../shared-templates/blacklist.txt.j2', dest: '{{idam_path}}/openidm/conf/blacklist.txt' }
-#    - { src: 'endpoint-notify.json.j2', dest: '{{idam_path}}/openidm/conf/endpoint-notify.json' }
-#    - { src: 'script.json.j2', dest: '{{idam_path}}/openidm/conf/script.json' }
-#    - { src: 'access.js.j2', dest: '{{idam_path}}/openidm/script/access.js' }
-#    - { src: 'notify.groovy.j2', dest: '{{idam_path}}/openidm/script/notify.groovy' }
-#    - { src: 'audit.json.j2', dest: '{{idam_path}}/openidm/conf/audit.json' }
-#    - { src: 'idm_keystore.sh.j2', dest: '/opt/idam/idm_keystore.sh' }
-#    - { src: 'upload_keystore.sh.j2', dest: '/opt/idam/upload_keystore.sh' }
-#    - { src: 'download_keystore.sh.j2', dest: '/opt/idam/download_keystore.sh' }
-
 # remove lines starting with {%
 sed -i '' '/^{%/ d' ./idm/script/sunset.js || exit 1
 # todo: all the rest of the configuration needs to be checked if it's correct
-
-cp $IDM_SRC/templates/* ./idm/conf || exit 1
-# strip all .j2 files of its suffix
-for file in ./idm/conf/*.j2; do
-  mv -- "$file" "${file%.j2}" || exit 1
-done
-
-echo "OK"
-
-print-pretty-header "Copying IDM binary files.."
-cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
 echo "OK"
 
 build-docker-image "idm"

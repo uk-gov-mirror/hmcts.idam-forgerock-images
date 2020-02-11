@@ -33,13 +33,12 @@ ENV FR_APP openam
 ENV USER_STORE_HOST userstore
 ENV CFG_STORE_HOST cfgAndCts
 ENV CTS_CFG_HOSTS cfgAndCts
-ENV USER_STORE_PORT 1389
-ENV CFG_STORE_PORT 1389
-ENV CTS_PORT 1389
+ENV USER_STORE_PORT 1636
+ENV CFG_STORE_PORT 1636
+ENV CTS_PORT 1636
 ENV ROOT_USER_DN cn=Directory Manager
 ENV ROOT_USER_PASSWORD Pa55word11
-ENV CTS_TOKEN_BASEDN ou=tokens,dc=reform,dc=hmcts,dc=net
-#ENV CTS_TOKEN_BASEDN ou=famrecords,ou=openam-session,ou=tokens,dc=reform,dc=hmcts,dc=net
+ENV CTS_TOKEN_BASEDN ou=famrecords,ou=openam-session,ou=tokens,dc=reform,dc=hmcts,dc=net
 ENV PROJECT hmcts
 ENV OPENAM_CTS_PASSWORD Pa55word11
 #ENV OPENAM_CTS_USERNAME_UID uid=am-config,ou=admins,ou=tokens,dc=reform,dc=hmcts,dc=net
@@ -68,7 +67,7 @@ ENV CATALINA_HOME=/opt/tomcat
 ENV CATALINA_BASE=/opt/tomcat
 
 # openldap-clients is needed to test for the configuration store.
-RUN apk add --no-cache su-exec unzip curl bash openldap-clients \
+RUN apk add --no-cache su-exec unzip curl bash openldap-clients sudo \
   && rm -fr /usr/local/tomcat/webapps/* \
   && unzip -q /tmp/openam.war -d  "$CATALINA_HOME"/webapps/openam \
   && rm /tmp/openam.war \
@@ -81,29 +80,29 @@ RUN apk add --no-cache su-exec unzip curl bash openldap-clients \
   && chmod -R 777  "$FORGEROCK_HOME"
 
 #RUN groupadd tomcat
-RUN addgroup tomcatusers && adduser -D tomcat -h "$CATALINA_HOME" && adduser tomcat tomcatusers
+RUN addgroup -S tomcatusers && adduser -D tomcat -h "$CATALINA_HOME" && adduser  -S -G tomcat tomcatusers
 RUN chown -R tomcat:tomcat /opt/tomcat
+RUN echo "tomcat ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/tomcat && \
+    chmod 0440 /etc/sudoers.d/tomcat
 
 # Settings for Tomcat
 ADD tomcat_conf/server.xml "$CATALINA_HOME"/conf/server.xml
 ADD tomcat_conf/context.xml "$CATALINA_HOME"/conf/context.xml
-ADD tomcat_conf/tomcatcert.jceks "$CATALINA_HOME"/.keystore
+ADD secrets/keystore.jceks "$CATALINA_HOME"/.keystore
 
 
 ADD openam_conf/*.amster "$FORGEROCK_HOME"/amster/
-#ADD openam_conf/config_files.ansiblePacker/ "$FORGEROCK_HOME"/amster/config_files/
 ADD openam_conf/config_files/ "$FORGEROCK_HOME"/amster/config_files/
 
 # Path to optional script to customize the AM web app. Use this script hook to copy in images, web.xml, etc.
 ENV CUSTOMIZE_AM /opt/tomcat/customize-am.sh
 
 ADD *.sh $FORGEROCK_HOME/
-ADD secrets /var/run/openam/secrets/
+ADD secrets "$FORGEROCK_HOME"/amster/secrets/
 
 ## TODO change to use forgerock user
 RUN chown -R tomcat:tomcat $FORGEROCK_HOME/
-RUN chown -R tomcat:tomcat /var/run/openam/
-RUN chmod -R 777 $FORGEROCK_HOME/ && chmod -R 777 /var/run/openam/
+RUN chmod -R 777 $FORGEROCK_HOME/
 
 #USER forgerock
 USER tomcat
