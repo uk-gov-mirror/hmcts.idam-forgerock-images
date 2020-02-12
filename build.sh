@@ -16,7 +16,6 @@ function check_dependency() {
 
 function check_dependencies() {
   echo "Checking dependencies..."
-  #todo
   check_dependency git
   check_dependency docker
   check_dependency kubectl
@@ -37,10 +36,11 @@ function show_help() {
   padding=20
   printf "Usage: %s command\n" "$0"
   printf "Where command is one of:\n"
-  printf "\t%-${padding}s\tBuilds a base downloader Docker Image, required for building all other images.\n" "build-downloader"
-  printf "\t%-${padding}s\tBuilds all required ForgeRock Docker Images, required a Downloader image as a base image.\n" "build-fr-all"
-  printf "\t%-${padding}s\tDeploys ForgeRock locally using Minikube. All images need to be built beforehand.\n" "deploy"
-  #todo
+  printf "  %-${padding}s\tBuilds a base downloader Docker Image, required for building all other images.\n" "build-downloader"
+  printf "  %-${padding}s\tBuilds all required ForgeRock Docker Images, required a Downloader image as a base image.\n" "build-fr-all"
+  printf "  %-${padding}s\tConfigures local Kubernetes for ForgeRock deployment.\n" "configure"
+  printf "  %-${padding}s\tDeploys ForgeRock locally using Minikube. All images need to be built beforehand.\n" "deploy"
+  printf "  %-${padding}s\tUndeploys ForgeRock locally using Minikube.\n" "undeploy"
 }
 
 function build_downloader() {
@@ -60,8 +60,8 @@ function build_fr_all() {
   docker build --tag forgerock/ds:$FR_VERSION -f forgeops/docker/ds/Dockerfile forgeops/docker/ds || exit 1
 }
 
-function deploy() {
-  title "Deploying ForgeRock locally using Minikube..."
+function configure() {
+  title "Configuring local Kubernetes..."
   check_dependencies
 
   title "Starting a Minikube cluster.."
@@ -77,22 +77,8 @@ function deploy() {
   title "Enabling Minikube Ingress Controller..."
   minikube addons enable ingress || exit 1
 
-  #  title "Installing the CustomResourceDefinition resources..."
-  #  kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/v0.13.0/deploy/manifests/00-crds.yaml || exit 1
-  #  kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.13/deploy/manifests/00-crds.yaml || exit 1
-  #  kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.5/deploy/manifests/00-crds.yaml || exit 1
-
-  #  title "Adding JetStack Helm repository..."
-  #  helm repo add jetstack https://charts.jetstack.io || exit 1
-
-  #  title "Updating local Helm chart cache..."
-  #  helm repo update || exit 1
-
   title "Installing the Certificate Manager..."
   if [ -z "$(kubectl get customresourcedefinitions | grep certmanager)" ]; then
-    #    helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v0.13.0 || exit 1
-    #    helm install cert-manager jetstack/cert-manager --namespace kube-system --version v0.13.0 || exit 1
-    #    helm install cert-manager jetstack/cert-manager --namespace kube-system --version v0.5.2 || exit 1
     helm install stable/cert-manager --namespace kube-system --version v0.5.0 || exit 1
   else
     echo "Already installed."
@@ -119,13 +105,18 @@ function deploy() {
 
   title "Installing frconfig Helm Chart..."
   if [ -z "$(helm list --all | grep frconfig)" ]; then
-    helm install --name frconfig forgeops/helm/frconfig --values frconfig.yaml || exit 1
+    helm install --name frconfig forgeops/helm/frconfig --values values/frconfig.yaml || exit 1
   else
     echo "Already installed."
   fi
 
   title "Cleaning up..."
   rm -v forgeops/helm/frconfig/secrets/id_rsa || exit 1
+}
+
+function deploy() {
+  # TODO impleent
+  true
 }
 
 function undeploy() {
@@ -148,6 +139,10 @@ build-downloader)
   ;;
 build-fr-all)
   build_fr_all
+  exit 0
+  ;;
+configure)
+  configure
   exit 0
   ;;
 deploy)
