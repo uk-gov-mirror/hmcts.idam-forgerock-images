@@ -43,31 +43,24 @@ function show_help() {
   printf "  %-${padding}s\tUndeploys ForgeRock locally using Minikube.\n" "undeploy"
 }
 
-DOCKER_LOCAL_REGISTRY="localhost"
-function ensure_local_docker_registry() {
-  REGISTRY_RUNNING=$(docker inspect -f '{{.State.Running}}' registry)
-  if [ ! "$REGISTRY_RUNNING" = "true" ]; then
-    title "Starting local Docker registry..."
-    docker run -d -p 5000:5000 --restart=always --name registry registry:2 || exit 1
-  fi
+function turn_k8s_docker_on() {
+  title "Switching to the internal Minikube Docker registry..."
+  eval "$(minikube -p minikube docker-env --shell bash)" || exit 1
 }
 
 function build_downloader() {
   title "Building the ForgeRock downloader Docker Image.."
   require_variable "FR_API_KEY"
+  turn_k8s_docker_on
+
   docker build --no-cache --build-arg API_KEY=$FR_API_KEY --tag forgerock/downloader -f forgeops/docker/downloader/Dockerfile forgeops/docker/downloader || exit 1
 }
 
 function build_and_push() {
   title "Building $1 Docker Image.."
-  ensure_local_docker_registry
+  turn_k8s_docker_on
 
   docker build --tag forgerock/$1:$FR_VERSION -f forgeops/docker/$1/Dockerfile forgeops/docker/$1 || exit 1
-  #  docker build --no-cache --tag forgerock/$1:$FR_VERSION -f forgeops/docker/$1/Dockerfile forgeops/docker/$1 || exit 1
-
-  title "Tagging and pushing..."
-  docker tag forgerock/$1:$FR_VERSION $DOCKER_LOCAL_REGISTRY:5000/forgerock/$1:$FR_VERSION || exit 1
-  docker push $DOCKER_LOCAL_REGISTRY:5000/forgerock/$1:$FR_VERSION || exit 1
 }
 
 function build_fr_all() {
@@ -92,6 +85,8 @@ function configure() {
   title "Setting up Helm on Minikube..."
   if [ -z "$(kubectl get pods --all-namespaces | grep tiller-deploy)" ]; then
     helm init --upgrade --service-account default || exit 1
+    echo "Sleeping to give Tiller time to start.."
+    sleep 10
   else
     echo "Already set up."
   fi
@@ -155,8 +150,14 @@ function undeploy() {
   forgeops/bin/remove-all.sh -N || exit 1
 }
 
+function cleanup() {
+  eval "$(minikube -p minikube docker-env --shell bash -u)"
+}
+
 # ======================================================================================================================
 # ======================================================================================================================
+trap cleanup EXIT
+
 # extract the COMMAND
 case "$1" in
 "")
