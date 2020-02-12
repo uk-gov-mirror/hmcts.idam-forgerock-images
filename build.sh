@@ -5,7 +5,7 @@ FR_VERSION=6.5.2
 # ======================================================================================================================
 # ======================================================================================================================
 function title() {
-  echo -e "==> $1"
+  echo -e "\n==> $1"
 }
 
 function check_dependency() {
@@ -67,23 +67,35 @@ function deploy() {
   title "Starting a Minikube cluster.."
   #  minikube start --memory=8192 --disk-size=30g --vm-driver=virtualbox --bootstrapper kubeadm --kubernetes-version=v1.17.2 || exit 1
 
+  title "Setting up Helm on Minikube..."
+  if [ -z "$(kubectl get pods --all-namespaces | grep tiller-deploy)" ]; then
+    helm init --upgrade --service-account default || exit 1
+  else
+    echo "Already set up."
+  fi
+
   title "Enabling Minikube Ingress Controller..."
   minikube addons enable ingress || exit 1
 
-  title "Installing the CustomResourceDefinition resources..."
-  kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/v0.13.0/deploy/manifests/00-crds.yaml || exit 1
+  #  title "Installing the CustomResourceDefinition resources..."
+  #  kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/v0.13.0/deploy/manifests/00-crds.yaml || exit 1
+  #  kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.13/deploy/manifests/00-crds.yaml || exit 1
+  #  kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.5/deploy/manifests/00-crds.yaml || exit 1
 
-  title "Adding JetStack Helm repository..."
-  helm repo add jetstack https://charts.jetstack.io || exit 1
+  #  title "Adding JetStack Helm repository..."
+  #  helm repo add jetstack https://charts.jetstack.io || exit 1
 
-  title "Updating local Helm chart cache..."
-  helm repo update || exit 1
+  #  title "Updating local Helm chart cache..."
+  #  helm repo update || exit 1
 
   title "Installing the Certificate Manager..."
-  if [[ "$(helm list -q --namespace kube-system)" == *"cert-manager"* ]]; then
-    echo "Already installed."
+  if [ -z "$(kubectl get customresourcedefinitions | grep certmanager)" ]; then
+    #    helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v0.13.0 || exit 1
+    #    helm install cert-manager jetstack/cert-manager --namespace kube-system --version v0.13.0 || exit 1
+    #    helm install cert-manager jetstack/cert-manager --namespace kube-system --version v0.5.2 || exit 1
+    helm install stable/cert-manager --namespace kube-system --version v0.5.0 || exit 1
   else
-    helm install cert-manager jetstack/cert-manager --namespace kube-system --version v0.13.0 || exit 1
+    echo "Already installed."
   fi
 
   title "Creating a Kubernetes namespace..."
@@ -95,22 +107,30 @@ function deploy() {
 
   title "Switching namespaces..."
   kubens forgerock-local || exit 1
-  
+
   title "Configuring the Configuration Repository Private Key..."
   require_variable CONFIG_REPO_PRIVATE_KEY_PATH
-  [[ "$CONFIG_REPO_PRIVATE_KEY_PATH" == *"id_rsa" ]] || { echo "The CONFIG_REPO_PRIVATE_KEY_PATH must end with id_rsa!" && exit 1; }
   if [ -f "$CONFIG_REPO_PRIVATE_KEY_PATH" ]; then
-    cp -v "$CONFIG_REPO_PRIVATE_KEY_PATH" forgeops/helm/frconfig/secrets || exit 1
+    cp -v "$CONFIG_REPO_PRIVATE_KEY_PATH" forgeops/helm/frconfig/secrets/id_rsa || exit 1
   else
     echo "File not found: $CONFIG_REPO_PRIVATE_KEY_PATH"
     exit 1
   fi
 
   title "Installing frconfig Helm Chart..."
-  helm install frconfig forgeops/helm/frconfig --values frconfig.yaml || exit 1
+  if [ -z "$(helm list --all | grep frconfig)" ]; then
+    helm install --name frconfig forgeops/helm/frconfig --values frconfig.yaml || exit 1
+  else
+    echo "Already installed."
+  fi
 
   title "Cleaning up..."
   rm -v forgeops/helm/frconfig/secrets/id_rsa || exit 1
+}
+
+function undeploy() {
+  title "Undeploying ForgeRock..."
+  forgeops/bin/remove-all.sh -N || exit 1
 }
 
 # ======================================================================================================================
@@ -132,6 +152,10 @@ build-fr-all)
   ;;
 deploy)
   deploy
+  exit 0
+  ;;
+undeploy)
+  undeploy
   exit 0
   ;;
 *)
