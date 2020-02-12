@@ -43,21 +43,39 @@ function show_help() {
   printf "  %-${padding}s\tUndeploys ForgeRock locally using Minikube.\n" "undeploy"
 }
 
+DOCKER_LOCAL_REGISTRY="localhost"
+function ensure_local_docker_registry() {
+  REGISTRY_RUNNING=$(docker inspect -f '{{.State.Running}}' registry)
+  if [ ! "$REGISTRY_RUNNING" = "true" ]; then
+    title "Starting local Docker registry..."
+    docker run -d -p 5000:5000 --restart=always --name registry registry:2 || exit 1
+  fi
+}
+
 function build_downloader() {
   title "Building the ForgeRock downloader Docker Image.."
   require_variable "FR_API_KEY"
   docker build --no-cache --build-arg API_KEY=$FR_API_KEY --tag forgerock/downloader -f forgeops/docker/downloader/Dockerfile forgeops/docker/downloader || exit 1
 }
 
+function build_and_push() {
+  title "Building $1 Docker Image.."
+  ensure_local_docker_registry
+
+  docker build --tag forgerock/$1:$FR_VERSION -f forgeops/docker/$1/Dockerfile forgeops/docker/$1 || exit 1
+  #  docker build --no-cache --tag forgerock/$1:$FR_VERSION -f forgeops/docker/$1/Dockerfile forgeops/docker/$1 || exit 1
+
+  title "Tagging and pushing..."
+  docker tag forgerock/$1:$FR_VERSION $DOCKER_LOCAL_REGISTRY:5000/forgerock/$1:$FR_VERSION || exit 1
+  docker push $DOCKER_LOCAL_REGISTRY:5000/forgerock/$1:$FR_VERSION || exit 1
+}
+
 function build_fr_all() {
   title "Building all the ForgeRock Docker Images..."
 
-  # AM
-  docker build --tag forgerock/openam:$FR_VERSION -f forgeops/docker/openam/Dockerfile forgeops/docker/openam || exit 1
-  # IDM
-  docker build --tag forgerock/openidm:$FR_VERSION -f forgeops/docker/openidm/Dockerfile forgeops/docker/openidm || exit 1
-  # DS
-  docker build --tag forgerock/ds:$FR_VERSION -f forgeops/docker/ds/Dockerfile forgeops/docker/ds || exit 1
+  build_and_push openam
+  build_and_push openidm
+  build_and_push ds
 }
 
 function configure() {
@@ -65,7 +83,11 @@ function configure() {
   check_dependencies
 
   title "Starting a Minikube cluster.."
-  #  minikube start --memory=8192 --disk-size=30g --vm-driver=virtualbox --bootstrapper kubeadm --kubernetes-version=v1.17.2 || exit 1
+  if [ "$(minikube status | grep -c "Stopped\|Nonexistent")" = "0" ]; then
+    echo "Minikube already running."
+  else
+    minikube start --memory=8192 --disk-size=30g --vm-driver=virtualbox --bootstrapper kubeadm --kubernetes-version=v1.15.0 || exit 1
+  fi
 
   title "Setting up Helm on Minikube..."
   if [ -z "$(kubectl get pods --all-namespaces | grep tiller-deploy)" ]; then
@@ -115,8 +137,17 @@ function configure() {
 }
 
 function deploy() {
-  # TODO impleent
-  true
+  # TODO implement
+  title "Deploying ForgeRock to Kubernetes..."
+
+  title "Installing the directory server for the configuration store..."
+  helm install forgeops/helm/ds --values values/configstore.yaml || exit 1
+
+  title "Installing the directory server for the user store..."
+  helm install forgeops/helm/ds --values values/userstore.yaml || exit 1
+
+  title "Installing the directory server for the CTS store..."
+  helm install forgeops/helm/ds --values values/ctsstore.yaml || exit 1
 }
 
 function undeploy() {
