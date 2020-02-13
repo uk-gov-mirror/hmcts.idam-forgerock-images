@@ -13,7 +13,6 @@ function header() {
 ================================
 FORGEROCK IMAGES BUILDING SCRIPT
 ================================
-
 EOF
 }
 
@@ -51,6 +50,7 @@ function show_help() {
   printf "  %-${padding}s\tDeploys ForgeRock locally using Minikube. All images need to be built beforehand.\n" "deploy"
   printf "  %-${padding}s\tRedeploys ForgeRock locally using Minikube. Combines undeploy, configure and deploy.\n" "redeploy"
   printf "  %-${padding}s\tUndeploys ForgeRock locally using Minikube.\n" "undeploy"
+  printf "  %-${padding}s\tUpdates the ForgeRock configuration using IDAM Packer repository.\n" "update-fr-config"
 }
 
 function turn_k8s_docker_on() {
@@ -64,7 +64,6 @@ function build_downloader() {
   turn_k8s_docker_on
 
   docker build --build-arg API_KEY=$FR_API_KEY --tag forgerock/downloader -f forgeops/docker/downloader/Dockerfile forgeops/docker/downloader || exit 1
-  #docker build --no-cache --build-arg API_KEY=$FR_API_KEY --tag forgerock/downloader -f forgeops/docker/downloader/Dockerfile forgeops/docker/downloader || exit 1
 }
 
 function build_and_push() {
@@ -162,16 +161,17 @@ function deploy() {
   title "Listing the current pods..."
   kubectl get pods || exit 1
 
-  title "Describing Ingress Controller..."
-  kubectl describe ingress || exit 1
+  #  title "Describing Ingress Controller..."
+  #  kubectl describe ingress || exit 1
 
   title "Service Information Summary"
-  FR_HOST=$(kubectl describe ingress | grep "  login." | xargs)
+  FR_HOST=$(kubectl get ingress -o jsonpath="{.items[0].spec.rules[0].host}")
   FR_IP=$(minikube ip)
   echo "Please add the following line to your /etc/hosts file:"
   echo -e "$FR_IP\t$FR_HOST"
   echo
-  echo "Your amadmin password: $(kubectl get configmaps amster-config -o yaml | grep -o 'adminPwd \"\(.*\)\"')"
+  echo "AM will be available at: https://$FR_HOST/XUI/?service=adminconsoleservice"
+  echo "Your \"amadmin\" user password: $(kubectl get configmaps amster-config -o yaml | grep -o 'adminPwd \"\(.*\)\"')"
   echo
   echo "NOTE: Please remember to set up your browser/system to always trust FR self-signed certificate!"
   echo "      (more info: https://www.robpeck.com/2010/10/google-chrome-mac-os-x-and-self-signed-ssl-certificates/)"
@@ -184,6 +184,22 @@ function undeploy() {
 
 function cleanup() {
   eval "$(minikube -p minikube docker-env --shell bash -u)"
+}
+
+function update-fr-config() {
+  title "Updating ForgeRock configuration based on IDAM Packer..."
+  printf "Clearing the old files..."
+  CFG_DIR=forgeops-config/dev
+  rm -Rf $CFG_DIR/am/* || exit 1
+  rm -Rf $CFG_DIR/ds/* || exit 1
+  rm -Rf f$CFG_DIR/idm/* || exit 1
+  printf " OK\n"
+  printf "Copying AM configuration..."
+  cp -r cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/* $CFG_DIR/am/ || exit 1
+  printf " OK\n"
+
+  git -C forgeops-config status
+  echo "The configuration has been updated. Please remember to git commit/push to make the changes take effect."
 }
 
 # ======================================================================================================================
@@ -220,6 +236,10 @@ undeploy)
   ;;
 redeploy)
   undeploy && configure && deploy
+  exit 0
+  ;;
+update-fr-config)
+  update-fr-config
   exit 0
   ;;
 *)
