@@ -8,6 +8,15 @@ function title() {
   echo -e "\n==> $1"
 }
 
+function header() {
+  cat <<EOF
+================================
+FORGEROCK IMAGES BUILDING SCRIPT
+================================
+
+EOF
+}
+
 function check_dependency() {
   printf -- "- %-15s" "$1"
   [ -x "$(command -v "$1")" ] || { printf -- "not found!\n" && exit 1; }
@@ -40,6 +49,7 @@ function show_help() {
   printf "  %-${padding}s\tBuilds all required ForgeRock Docker Images, required a Downloader image as a base image.\n" "build-fr-all"
   printf "  %-${padding}s\tConfigures local Kubernetes for ForgeRock deployment.\n" "configure"
   printf "  %-${padding}s\tDeploys ForgeRock locally using Minikube. All images need to be built beforehand.\n" "deploy"
+  printf "  %-${padding}s\tRedeploys ForgeRock locally using Minikube. Combines undeploy, configure and deploy.\n" "redeploy"
   printf "  %-${padding}s\tUndeploys ForgeRock locally using Minikube.\n" "undeploy"
 }
 
@@ -53,7 +63,8 @@ function build_downloader() {
   require_variable "FR_API_KEY"
   turn_k8s_docker_on
 
-  docker build --no-cache --build-arg API_KEY=$FR_API_KEY --tag forgerock/downloader -f forgeops/docker/downloader/Dockerfile forgeops/docker/downloader || exit 1
+  docker build --build-arg API_KEY=$FR_API_KEY --tag forgerock/downloader -f forgeops/docker/downloader/Dockerfile forgeops/docker/downloader || exit 1
+  #docker build --no-cache --build-arg API_KEY=$FR_API_KEY --tag forgerock/downloader -f forgeops/docker/downloader/Dockerfile forgeops/docker/downloader || exit 1
 }
 
 function build_and_push() {
@@ -69,11 +80,13 @@ function build_fr_all() {
   build_and_push openam
   build_and_push openidm
   build_and_push ds
+  build_and_push amster
 }
 
 function configure() {
   title "Configuring local Kubernetes..."
   check_dependencies
+  require_variable CONFIG_REPO_PRIVATE_KEY_PATH
 
   title "Starting a Minikube cluster.."
   if [ "$(minikube status | grep -c "Stopped\|Nonexistent")" = "0" ]; then
@@ -112,7 +125,6 @@ function configure() {
   kubens forgerock-local || exit 1
 
   title "Configuring the Configuration Repository Private Key..."
-  require_variable CONFIG_REPO_PRIVATE_KEY_PATH
   if [ -f "$CONFIG_REPO_PRIVATE_KEY_PATH" ]; then
     cp -v "$CONFIG_REPO_PRIVATE_KEY_PATH" forgeops/helm/frconfig/secrets/id_rsa || exit 1
   else
@@ -132,17 +144,37 @@ function configure() {
 }
 
 function deploy() {
-  # TODO implement
   title "Deploying ForgeRock to Kubernetes..."
 
-  title "Installing the directory server for the configuration store..."
-  helm install forgeops/helm/ds --values values/configstore.yaml || exit 1
+  title "Installing the directory server for the configuration store Helm chart..."
+  helm install --name configstore forgeops/helm/ds --values values/configstore.yaml || exit 1
 
-  title "Installing the directory server for the user store..."
-  helm install forgeops/helm/ds --values values/userstore.yaml || exit 1
+  title "Installing the directory server for the user store Helm chart..."
+  helm install --name userstore forgeops/helm/ds --values values/userstore.yaml || exit 1
 
-  title "Installing the directory server for the CTS store..."
-  helm install forgeops/helm/ds --values values/ctsstore.yaml || exit 1
+  title "Installing the directory server for the CTS store Helm chart..."
+  helm install --name ctsstore forgeops/helm/ds --values values/ctsstore.yaml || exit 1
+
+  title "Installing the AM and Amster Helm chart..."
+  helm install --name openam forgeops/helm/openam --values values/openam.yaml || exit 1
+  helm install --name amster forgeops/helm/amster --values values/amster.yaml || exit 1
+
+  title "Listing the current pods..."
+  kubectl get pods || exit 1
+
+  title "Describing Ingress Controller..."
+  kubectl describe ingress || exit 1
+
+  title "Service Information Summary"
+  FR_HOST=$(kubectl describe ingress | grep "  login." | xargs)
+  FR_IP=$(minikube ip)
+  echo "Please add the following line to your /etc/hosts file:"
+  echo -e "$FR_IP\t$FR_HOST"
+  echo
+  echo "Your amadmin password: $(kubectl get configmaps amster-config -o yaml | grep -o 'adminPwd \"\(.*\)\"')"
+  echo
+  echo "NOTE: Please remember to set up your browser/system to always trust FR self-signed certificate!"
+  echo "      (more info: https://www.robpeck.com/2010/10/google-chrome-mac-os-x-and-self-signed-ssl-certificates/)"
 }
 
 function undeploy() {
@@ -156,7 +188,8 @@ function cleanup() {
 
 # ======================================================================================================================
 # ======================================================================================================================
-trap cleanup EXIT
+trap cleanup SIGINT SIGTERM SIGUSR1 EXIT
+header
 
 # extract the COMMAND
 case "$1" in
@@ -183,6 +216,10 @@ deploy)
   ;;
 undeploy)
   undeploy
+  exit 0
+  ;;
+redeploy)
+  undeploy && configure && deploy
   exit 0
   ;;
 *)

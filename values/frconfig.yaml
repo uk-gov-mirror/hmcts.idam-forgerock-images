@@ -1,4 +1,4 @@
-domain: .my-domain.com
+domain: .minikube.local
 git:
   repo: git@github.com:hmcts/forgeops-config.git
   branch: master

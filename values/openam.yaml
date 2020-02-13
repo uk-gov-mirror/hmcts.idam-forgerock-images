@@ -1,0 +1,3 @@
+domain: .minikube.local
+image:
+  repository: forgerock/openam

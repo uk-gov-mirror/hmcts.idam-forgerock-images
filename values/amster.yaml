@@ -1,0 +1,5 @@
+domain: .minikube.local
+config:
+  importPath: /6.5/default/am/empty-import
+image:
+  repository: forgerock/amster
