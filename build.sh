@@ -141,31 +141,31 @@ cp -R $DS_SRC/templates/cts_store/* $DS_TRG/setup_scripts_cts || exit 1
 # delete 00-runme.sh.j2, superseded by 00-runme.sh which changes the script run order
 rm $DS_TRG/setup_scripts_cts/00-runme.sh.j2 || exit 1
 
-for file in $DS_TRG/setup_scripts_cfg/*.sh.j2 \
-  $DS_TRG/setup_scripts_cts/*.sh.j2 \
-  $DS_TRG/setup_scripts_cts/00-runme.sh; do
-  search-and-replace "{{ opendj_home }}" '\$CFG_SCRIPTS\/\.\.' "$file"
-  search-and-replace "--port 4444" '--port \$ADMIN_PORT' "$file"
-  search-and-replace "{{ baseDN }}" '\$BASE_DN' "$file"
-  search-and-replace "{{ bindDN }}" '\$USER' "$file"
-  search-and-replace "--bindDN \"cn=Directory Manager\"" '--bindDN \"\$USER\"' "$file"
-  search-and-replace "{{ BINDPASSWD }}" '\$PASSWORD' "$file"
-  search-and-replace "\/opt\/opendj" '\$OPENDJ_ROOT' "$file"
-  search-and-replace "--port 1389" '--port \$LDAP_PORT' "$file"
-  search-and-replace "--hostname localhost" '--hostname \$DSHOSTNAME' "$file"
-  search-and-replace "{{ openam_username }}" '\$OPENAM_USERNAME' "$file"
-  search-and-replace "{{ openam_cts_username }}" '\$OPENAM_CTS_USERNAME' "$file"
-  search-and-replace "{{ cts_baseDN }}" '\$CTS_BASE_DN' "$file"
-done
-for file in $DS_TRG/setup_scripts_cfg/*.ldif.j2 $DS_TRG/setup_scripts_cts/*.ldif.j2; do
-  search-and-replace "{{ opendj_home }}" 'CFG_SCRIPTS\/\.\.' "$file"
-  search-and-replace "{{ baseDN }}" 'BASE_DN' "$file"
-  search-and-replace "{{ openam_username }}" 'OPENAM_USERNAME' "$file"
-  search-and-replace "{{ openam_cts_username }}" 'OPENAM_CTS_USERNAME' "$file"
-  search-and-replace "{{ cts_baseDN }}" 'CTS_BASE_DN' "$file"
-  search-and-replace "{{ openam_cts_password }}" 'OPENAM_PASSWORD' "$file"
-  search-and-replace "{{ openam_password }}" 'OPENAM_PASSWORD' "$file"
-done
+#for file in $DS_TRG/setup_scripts_cfg/*.sh.j2 \
+#  $DS_TRG/setup_scripts_cts/*.sh.j2 \
+#  $DS_TRG/setup_scripts_cts/00-runme.sh; do
+#  search-and-replace "{{ opendj_home }}" '\$CFG_SCRIPTS\/\.\.' "$file"
+#  search-and-replace "--port 4444" '--port \$ADMIN_PORT' "$file"
+#  search-and-replace "{{ baseDN }}" '\$BASE_DN' "$file"
+#  search-and-replace "{{ bindDN }}" '\$USER' "$file"
+#  search-and-replace "--bindDN \"cn=Directory Manager\"" '--bindDN \"\$USER\"' "$file"
+#  search-and-replace "{{ BINDPASSWD }}" '\$PASSWORD' "$file"
+#  search-and-replace "\/opt\/opendj" '\$OPENDJ_ROOT' "$file"
+#  search-and-replace "--port 1389" '--port \$LDAP_PORT' "$file"
+#  search-and-replace "--hostname localhost" '--hostname \$DSHOSTNAME' "$file"
+#  search-and-replace "{{ openam_username }}" '\$OPENAM_USERNAME' "$file"
+#  search-and-replace "{{ openam_cts_username }}" '\$OPENAM_CTS_USERNAME' "$file"
+#  search-and-replace "{{ cts_baseDN }}" '\$CTS_BASE_DN' "$file"
+#done
+#for file in $DS_TRG/setup_scripts_cfg/*.ldif.j2 $DS_TRG/setup_scripts_cts/*.ldif.j2; do
+#  search-and-replace "{{ opendj_home }}" 'CFG_SCRIPTS\/\.\.' "$file"
+#  search-and-replace "{{ baseDN }}" 'BASE_DN' "$file"
+#  search-and-replace "{{ openam_username }}" 'OPENAM_USERNAME' "$file"
+#  search-and-replace "{{ openam_cts_username }}" 'OPENAM_CTS_USERNAME' "$file"
+#  search-and-replace "{{ cts_baseDN }}" 'CTS_BASE_DN' "$file"
+#  search-and-replace "{{ openam_cts_password }}" 'OPENAM_PASSWORD' "$file"
+#  search-and-replace "{{ openam_password }}" 'OPENAM_PASSWORD' "$file"
+#done
 
 find-unprocessed-ansible-files "$DS_TRG"
 

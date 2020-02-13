@@ -11,9 +11,6 @@ echo "Command: $command"
 export CONFIGURATION_LDAP="${CONFIGURATION_LDAP:-localhost:1389}"
 echo "CONFIGURATION_LDAP = $CONFIGURATION_LDAP"
 
-# Optional AM web app customization script that can be run before Tomcat starts.
-CUSTOMIZE_AM="${CUSTOMIZE_AM:-/opt/tomcat/customize-am.sh}"
-
 
 # Default path to config store directory manager password file. This is mounted by Kubernetes.
 DIR_MANAGER_PW_FILE=${DIR_MANAGER_PW_FILE:-/var/run/openam/secrets/dirmanager.pw}
@@ -25,7 +22,7 @@ export OPENAM_HOME=${OPENAM_HOME:-/opt/tomcat/openam}
 # Wait until the configuration store comes up. This function will not return until it is up.
 wait_configstore_up() {
     echo "Waiting for the configuration store to come up daje...."
-    sleep 120
+    sleep 80
 
     while true 
     do
@@ -64,10 +61,13 @@ bootstrap_openam() {
       "${CATALINA_HOME}/bin/startup.sh"
 
       echo "waiting restart of DS..."
-      sleep 180
+      sleep 80
 
       run_amster_configurator "install"
       run_amster_configurator "import"
+
+      cat $FORGEROCK_HOME/openam/openam/.storepass|keytool -import -alias server-cert -file $FORGEROCK_HOME/amster/secrets/local.cert.cer -storetype jceks -keystore $FORGEROCK_HOME/openam/openam/keystore.jceks -noprompt
+      sudo keytool -importcert -alias server-cert -file $FORGEROCK_HOME/amster/secrets/local.cert.cer -trustcacerts -keystore $JAVA_HOME/lib/security/cacerts -noprompt -storepass changeit
 
       echo "we need to restart now"
       "${CATALINA_HOME}/bin/shutdown.sh"

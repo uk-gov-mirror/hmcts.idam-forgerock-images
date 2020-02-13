@@ -18,7 +18,7 @@ export PASSWORD=${PW:-Pa55word11}
 
 run_userstore_config(){
 ##If any optional LDIF files are present, load them.
-ldif=""$OPENDJ_ROOT"/bootstrap/$1"
+ldif=""$OPENDJ_ROOT"/$1"
 
 # from main.yml, listing the configuration that is not needed for a local environment
 #
@@ -53,6 +53,16 @@ ldif=""$OPENDJ_ROOT"/bootstrap/$1"
   --set default-password-storage-scheme:"Salted SHA-512" \
   --no-prompt
 
+echo "#Enable SSL [localhost]"
+"$OPENDJ_ROOT"/bin/dsconfig  \
+  --hostname $DSHOSTNAME \
+  --port "$ADMIN_PORT" \
+  --bindDN "$USER" \
+  --bindPassword $PASSWORD \
+  --trustAll \
+  -n set-crypto-manager-prop \
+  --set ssl-encryption:true
+
 # create-password-validator
 "$OPENDJ_ROOT"/bin/dsconfig \
   create-password-validator \
@@ -64,7 +74,7 @@ ldif=""$OPENDJ_ROOT"/bootstrap/$1"
   --type dictionary \
   --set enabled:true \
   --set check-substrings:false \
-  --set dictionary-file:bootstrap/blacklist.txt \
+  --set dictionary-file:blacklist.txt \
   --trustAll \
   --no-prompt
 
@@ -98,16 +108,24 @@ ldif=""$OPENDJ_ROOT"/bootstrap/$1"
 
 update_env_variable(){
 
-  cd $CFG_SCRIPTS/ldif
-  grep -rl BASE_DN . | xargs sed -i'' "s/BASE_DN/$BASE_DN/"
-  grep -rl OPENAM_USERNAME . | xargs sed -i'' "s/OPENAM_USERNAME/$OPENAM_USERNAME/"
-  grep -rl OPENAM_PASSWORD . | xargs sed -i'' "s/OPENAM_PASSWORD/$OPENAM_PASSWORD/"
+  echo "update environment variables"
+  cd $1
+  pwd
+  grep -rl '{{ baseDN }}' *.* | xargs sed -i'' 's/{{ baseDN }}/'$BASE_DN'/'
+#  grep -rl "{{ openam_username }}" *.ldif | xargs sed -i'' 's/{{ openam_username }}/'$OPENAM_USERNAME'/'
+  grep -rl '{{ openam_password }}' *.* | xargs sed -i'' 's/{{ openam_password }}/'$OPENAM_PASSWORD'/'
+  grep -rl 4444 *.sh | xargs sed -i'' 's/4444/'$ADMIN_PORT'/'
+ # grep -rl '{{ baseDN }}' *.sh | xargs sed -i'' 's/{{ baseDN }}/'$BASE_DN'/'
+  grep -rl 1389 *.sh | xargs sed -i'' 's/1389/'$LDAP_PORT'/'
+  grep -rl '{{ openam_username }}' *.* | xargs sed -i'' 's/{{ openam_username }}/'$OPENAM_USERNAME'/'
+  grep -rl '{{ openam_cts_username }}' *.* | xargs sed -i'' 's/{{ openam_cts_username }}/'$OPENAM_CTS_USERNAME'/'
+  grep -rl '{{ openam_cts_password }}' *.* | xargs sed -i'' 's/{{ openam_cts_password }}/'$PASSWORD'/'
+  grep -rl '{{ cts_baseDN }}' *.* | xargs sed -i'' 's/{{ cts_baseDN }}/'$CTS_BASE_DN'/'
+  #grep -rl '--hostname localhost' *.* | xargs sed -i'' 's/--hostname localhost/--hostname '$DSHOSTNAME'/'
 
-  cd $CTS_SCRIPTS/ldif
-  grep -rl CTS_BASE_DN . | xargs sed -i'' "s/CTS_BASE_DN/$CTS_BASE_DN/"
-  grep -rl OPENAM_CTS_USERNAME . | xargs sed -i'' "s/OPENAM_CTS_USERNAME/$OPENAM_CTS_USERNAME/"
-  grep -rl OPENAM_PASSWORD . | xargs sed -i'' "s/OPENAM_PASSWORD/$OPENAM_PASSWORD/"
-  grep -rl CTS_TOKEN_BASE_DN . | xargs sed -i'' "s/CTS_TOKEN_BASE_DN/$CTS_TOKEN_BASE_DN/"
+  grep -rl '{{ opendj_home }}' *.sh | xargs sed -i'' 's/{{ opendj_home }}/$OPENDJ_ROOT/'
+  grep -rl '{{ bindDN }}' *.sh | xargs sed -i'' 's/{{ bindDN }}/$USER/'
+  grep -rl '{{ BINDPASSWD }}' *.sh | xargs sed -i'' 's/{{ BINDPASSWD }}/$PASSWORD/'
 
 }
 
@@ -129,18 +147,22 @@ run_ldif_cfg_cts(){
   --set default-password-storage-scheme:"Salted SHA-512" \
   --no-prompt
 
-  update_env_variable
+  echo "do I need to sleep?"
 
+  # shellcheck disable=SC1065
+  update_env_variable $CFG_SCRIPTS
   cd $CFG_SCRIPTS
 
   echo "try to run CFG 00-runme.sh script"
   ./00-runme.sh
 
+  update_env_variable $CTS_SCRIPTS
   cd $CTS_SCRIPTS
   echo "try to run CTS 00-runme.sh script"
   ./00-runme.sh
 
 }
+
 
 
 
@@ -160,9 +182,21 @@ cd /opt/opendj
   --acceptLicense \
   --addBaseEntry
 
-
+echo "import keystore"
+keytool -importkeystore \
+        -srckeystore $OPENDJ_ROOT/secrets/keystore.pkcs12 \
+        -srcstoretype PKCS12 \
+        -srcstorepass $PASSWORD \
+        -srcalias server-cert \
+        -destkeystore /opt/opendj/keystore \
+        -deststorepass $PASSWORD \
+        -deststoretype PKCS12 \
+        -destkeypass $PASSWORD \
+        -destalias server-cert \
+        -no-prompt
 
 echo "depending on the DS_TYPE env variable defined in the composer file, a different profile is selected"
+#replace_ansible_variables
 case "$DS_TYPE" in
           "userstore")
             echo "install DS as userStore and config store"
