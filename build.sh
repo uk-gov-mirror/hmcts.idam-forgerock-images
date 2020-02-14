@@ -10,18 +10,10 @@ function build_docker_image() {
 }
 # ==================================================================================================================
 
-title "Building initial template Docker image..."
-build_docker_image "docker/am" "fr-local-am-template:latest"
+title "Building the base Docker image for AM..."
+build_docker_image "docker/am" "fr-local-am-base:latest"
 
-title "Cleaning the WORK folder..."
-rm -rf work/* || exit 1
-mkdir -p work || exit 1
+# todo build the rest of base images
 
-title "Copying local Ansible playbook..."
-cp -R ansible work || exit 1
-
-title "Copying Ansible roles from configuration..."
-cp -R cnp-idam-packer/ansible/roles/ work/ansible/roles/ || exit 1
-
-title "Running the local Ansible Playbook..."
-ansible-playbook -v -i work/ansible/inventory.yml work/ansible/playbook.yml
+title "Running Ansible for AM..."
+ansible-playbook -v -i ansible/inventory.yml ansible/am-playbook.yml

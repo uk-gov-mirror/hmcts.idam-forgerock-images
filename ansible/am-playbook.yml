@@ -1,0 +1,14 @@
+---
+- name: Bring the Docker container UP
+  hosts: localhost
+  tasks:
+    - name: Bring the AM Docker container UP
+      docker_container:
+        name: am
+        image: "fr-local-am-base:latest"
+        privileged: yes
+
+- name: Prepare AM Image
+  hosts: am
+  roles:
+    - name: "../cnp-idam-packer/ansible/roles/forgerock_am"

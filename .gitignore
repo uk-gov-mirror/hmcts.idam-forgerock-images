@@ -6,3 +6,9 @@
 
 # Working folder
 work/
+
+# For working with other branches
+forgeops/
+forgeops-config/
+*id_rsa
+*id_rsa.pub
