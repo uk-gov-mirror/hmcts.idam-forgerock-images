@@ -15,9 +15,9 @@ services:
   fr-idm:
     image: fr-local-idm:latest
     hostname: fr-idm
-  fr-am:
+  fr-am.local:
     image: fr-local-am:latest
-    hostname: fr-am
+    hostname: fr-am.local
     depends_on:
      - userstore
      - cfgAndCts
