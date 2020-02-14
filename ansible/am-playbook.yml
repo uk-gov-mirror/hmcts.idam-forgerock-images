@@ -11,4 +11,10 @@
 - name: Prepare AM Image
   hosts: am
   roles:
+#    - OMS
+#    - healthcheck
+#    - storage
+#    - logrotate
+#    - collectd
+    - name: "../cnp-idam-packer/ansible/roles/tomcat"
     - name: "../cnp-idam-packer/ansible/roles/forgerock_am"

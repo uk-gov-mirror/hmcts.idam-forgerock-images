@@ -3,7 +3,7 @@ FROM centos:7.5.1804
 ENV container docker
 
 # Update and install java and tools
-RUN yum -y update && yum -y install java-1.8.0-openjdk-headless wget sudo systemd; yum clean all
+RUN yum -y update && yum -y install java-1.8.0-openjdk-headless wget sudo systemd unzip; yum clean all
 
 # Get Tomcat and put it in a directory Ansible can use
 RUN mkdir -p /usr/tmp

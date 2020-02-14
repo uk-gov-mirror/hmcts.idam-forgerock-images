@@ -11,9 +11,14 @@ function build_docker_image() {
 # ==================================================================================================================
 
 title "Building the base Docker image for AM..."
-build_docker_image "docker/am" "fr-local-am-base:latest"
+#build_docker_image "docker/am" "fr-local-am-base:latest"
 
 # todo build the rest of base images
 
 title "Running Ansible for AM..."
-ansible-playbook -v -i ansible/inventory.yml ansible/am-playbook.yml
+if [ -z "$1" ]; then
+  ansible-playbook -v -i ansible/inventory.yml ansible/am-playbook.yml
+else
+  echo "Resuming from task: $1."
+  ansible-playbook -v -i ansible/inventory.yml ansible/am-playbook.yml --start-at-task="$1"
+fi
