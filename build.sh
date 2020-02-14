@@ -22,16 +22,16 @@
 FORGEROCK_REQUIRED_BINARIES=("$FORGEROCK_AM_FILE" "$FORGEROCK_AMSTER_FILE" "$FORGEROCK_DS_FILE" "$FORGEROCK_IDM_FILE")
 
 # Prints a pretty text header
-function print-pretty-header() { echo -e "\n>> $1"; }
+function header() { echo -e "\n==> $1"; }
 
 # Builds a Docker image using Dockerfile present in a provided directory
 function build-docker-image() {
-  print-pretty-header "Building Docker image for \"$1\""
+  header "Building Docker image for \"$1\""
   [ -f "$1/Dockerfile" ] || { echo "No Dockerfile found in directory \"$1\"!" && exit 1; }
   DOCKER_TAG_FINAL="${DOCKER_IMAGE_PREFIX}-${1}:${CONFIG_VERSION}"
   DOCKER_TAG_LATEST="${DOCKER_IMAGE_PREFIX}-${1}:latest"
   echo "Building the image and tagging as \"$DOCKER_TAG_FINAL\" and \"$DOCKER_TAG_LATEST\"."
-  #  docker build --tag "$DOCKER_TAG_FINAL" --tag "$DOCKER_TAG_LATEST" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
+#  docker build --tag "$DOCKER_TAG_FINAL" --tag "$DOCKER_TAG_LATEST" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
 }
 
 # Performs a git operation on the config sub-module
@@ -42,7 +42,7 @@ function git-branch() { git-config rev-parse --abbrev-ref HEAD; }
 
 # Updates the config submodule
 function update-config() {
-  print-pretty-header "Updating config from git submodule.."
+  header "Updating config from git submodule.."
   CURR_BRANCH="$(git-branch)"
   [ "$CURR_BRANCH" = "$CONFIGURATION_BRANCH" ] || { echo "The current branch of the configuration repository is \"$CURR_BRANCH\", expected: \"$CONFIGURATION_BRANCH\"" && exit 1; }
   { git-config fetch && git-config pull; } || { echo "Git submodule update failed!" && exit 1; }
@@ -52,7 +52,7 @@ function update-config() {
 
 # Makes sure that all the required binary files are present in the bin/ directory
 function check-binary-files-exist() {
-  print-pretty-header "Checking for ForgeRock binary files..."
+  header "Checking for ForgeRock binary files..."
   local error=false
   for file in ${FORGEROCK_REQUIRED_BINARIES[*]}; do
     [ -f "bin/$file" ] || { error=true && echo "- A binary file \"$file\" has not been found!"; }
@@ -62,16 +62,15 @@ function check-binary-files-exist() {
 }
 
 function prepare() {
-  print-pretty-header "Cleaning up leftover files from the previous run..."
+  header "Cleaning up leftover files from the previous run..."
   rm -r ./am/openam_conf/config_files ./am/openam_conf/amster.zip ./am/openam_conf/openam.war
   rm -r ./ds/opendj.zip ./ds/secrets ./ds/bootstrap
-  rm -r "./idm/$FORGEROCK_IDM_FILE"
+  rm -r "./idm/$FORGEROCK_IDM_FILE" ./idm/conf/* ./idm/script/*
   echo "OK"
 }
 
 function search-and-replace() {
   sed -i '' "s/$1/$2/" "$3" || exit 1
-  #  true;
 }
 
 # checks for the files still containing {{
@@ -98,13 +97,13 @@ update-config
 # ========================
 #            AM
 # ========================
-print-pretty-header "Copying AM configuration files.."
+header "Copying AM configuration files.."
 AM_SRC="./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/config_files"
 [ "$CONFIGURATION_BRANCH" = "preview" ] && AM_SRC="./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files"
 cp -R $AM_SRC ./am/openam_conf || exit 1
 echo "OK"
 
-print-pretty-header "Copying AM binary files.."
+header "Copying AM binary files.."
 cp "./bin/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || exit 1
 cp "./bin/$FORGEROCK_AMSTER_FILE" ./am/openam_conf/amster.zip || exit 1
 echo "OK"
@@ -115,7 +114,7 @@ build-docker-image "am"
 #            DS
 # ========================
 
-print-pretty-header "Copying DS configuration files.."
+header "Copying DS configuration files.."
 DS_SRC="./cnp-idam-packer/ansible/roles/forgerock_ds"
 DS_TRG="./ds/bootstrap/cfg_cts_store"
 
@@ -178,7 +177,7 @@ done
 cp ./cnp-idam-packer/ansible/shared-templates/blacklist.txt.j2 ./ds/bootstrap/blacklist.txt || exit 1
 echo "OK"
 
-print-pretty-header "Copying DS binary files.."
+header "Copying DS binary files.."
 cp "./bin/$FORGEROCK_DS_FILE" ./ds/opendj.zip || exit 1
 echo "OK"
 
@@ -187,43 +186,100 @@ build-docker-image "ds"
 # ========================
 #           IDM
 # ========================
-print-pretty-header "Copying IDM configuration files.."
+header "Copying IDM configuration files.."
 IDM_SRC="./cnp-idam-packer/ansible/roles/forgerock_idm"
+
+# copy conf/, security/, scripts/
+
+# copy script/
+mkdir -p ./idm/script || exit 1
 cp $IDM_SRC/templates/access.js.j2 ./idm/script/access.js || exit 1
 cp $IDM_SRC/templates/policy.js.j2 ./idm/script/policy.js || exit 1
 cp $IDM_SRC/templates/sunset.js.j2 ./idm/script/sunset.js || exit 1
 
+# copy conf/
 #   - { src: 'boot.properties.j2', dest: '{{idam_path}}/openidm/resolver/boot.properties' }
+# TODO ?
+
 #    - { src: 'repo.jdbc-postgresql-managed-user.json.j2', dest: '/opt/idm/openidm/conf/repo.jdbc.json' }
+cp $IDM_SRC/templates/repo.jdbc-postgresql-managed-user.json.j2 ./idm/conf/repo.jdbc.json || exit 1
+
 #    - { src: 'selfservice-registration.json.j2', dest: '{{idam_path}}/openidm/conf/selfservice-registration.json' }
+# TODO ?
+
 #    - { src: 'selfservice-reset.json.j2', dest: '{{idam_path}}/openidm/conf/selfservice-reset.json' }
+# TODO ?
+
 #    - { src: 'sync.json.j2', dest: '{{idam_path}}/openidm/conf/sync.json' }
+# TODO ?
+
 #    - { src: 'authentication.json.j2', dest: '{{idam_path}}/openidm/conf/authentication.json' }
+# TODO ?
+
 #    - { src: 'provisioner.openicf-ldap.json.j2', dest: '{{idam_path}}/openidm/conf/provisioner.openicf-ldap.json' }
+# TODO ?
+
 #    - { src: 'external.email.json.j2', dest: '{{idam_path}}/openidm/conf/external.email.json' }
+# TODO ?
+
 #    - { src: 'ui-configuration.json.j2', dest: '{{idam_path}}/openidm/conf/ui-configuration.json' }
+# TODO ?
+
 #    - { src: 'emailTemplate-welcome.json.j2', dest: '{{idam_path}}/openidm/conf/emailTemplate-welcome.json' }
+# TODO ?
+
 #    - { src: 'managed.json.j2', dest: '{{idam_path}}/openidm/conf/managed.json' }
+# TODO ?
+
 #    - { src: 'schedule-sunset-task.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-sunset-task.json' }
+# TODO ?
+
 #    - { src: 'schedule-reconcile-accounts.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-reconcile-accounts.json' }
+# TODO ?
+
 #    - { src: 'schedule-reconcile-roles.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-reconcile-roles.json' }
+# TODO ?
+
 #    - { src: 'sunset.js.j2', dest: '{{idam_path}}/openidm/script/sunset.js' }
+# TODO ?
+
 #    - { src: 'policy.js.j2', dest: '{{idam_path}}/openidm/bin/defaults/script/policy.js' }
+# TODO ?
+
 #    - { src: '../../shared-templates/blacklist.txt.j2', dest: '{{idam_path}}/openidm/conf/blacklist.txt' }
+# TODO ?
+
 #    - { src: 'endpoint-notify.json.j2', dest: '{{idam_path}}/openidm/conf/endpoint-notify.json' }
+# TODO ?
+
 #    - { src: 'script.json.j2', dest: '{{idam_path}}/openidm/conf/script.json' }
+# TODO ?
+
 #    - { src: 'access.js.j2', dest: '{{idam_path}}/openidm/script/access.js' }
+# TODO ?
+
 #    - { src: 'notify.groovy.j2', dest: '{{idam_path}}/openidm/script/notify.groovy' }
+# TODO ?
+
 #    - { src: 'audit.json.j2', dest: '{{idam_path}}/openidm/conf/audit.json' }
+# TODO ?
+
 #    - { src: 'idm_keystore.sh.j2', dest: '/opt/idam/idm_keystore.sh' }
+# TODO ?
+
 #    - { src: 'upload_keystore.sh.j2', dest: '/opt/idam/upload_keystore.sh' }
+# TODO ?
+
 #    - { src: 'download_keystore.sh.j2', dest: '/opt/idam/download_keystore.sh' }
+# TODO ?
+
 
 # remove lines starting with {%
 sed -i '' '/^{%/ d' ./idm/script/sunset.js || exit 1
 # todo: all the rest of the configuration needs to be checked if it's correct
 
-cp $IDM_SRC/templates/* ./idm/conf || exit 1
+#cp $IDM_SRC/templates/* ./idm/conf || exit 1
+
 # strip all .j2 files of its suffix
 for file in ./idm/conf/*.j2; do
   mv -- "$file" "${file%.j2}" || exit 1
@@ -231,7 +287,7 @@ done
 
 echo "OK"
 
-print-pretty-header "Copying IDM binary files.."
+header "Copying IDM binary files.."
 cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
 echo "OK"
 

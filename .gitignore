@@ -9,3 +9,12 @@ ds/bootstrap/
 ds/secrets/
 am/openam_conf/config_files/
 idm/script/
+
+# Personal ignores
+# ================
+
+# Rad
+*id_rsa
+*id_rsa.pub
+forgeops/
+forgeops-config/
