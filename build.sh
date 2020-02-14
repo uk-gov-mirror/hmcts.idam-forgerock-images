@@ -189,80 +189,39 @@ build-docker-image "ds"
 header "Copying IDM configuration files.."
 IDM_SRC="./cnp-idam-packer/ansible/roles/forgerock_idm"
 
-# copy conf/, security/, scripts/
-
-# copy script/
 mkdir -p ./idm/script || exit 1
-cp $IDM_SRC/templates/access.js.j2 ./idm/script/access.js || exit 1
-cp $IDM_SRC/templates/policy.js.j2 ./idm/script/policy.js || exit 1
-cp $IDM_SRC/templates/sunset.js.j2 ./idm/script/sunset.js || exit 1
+mkdir -p ./idm/security || exit 1
+mkdir -p ./idm/conf || exit 1
 
 # copy conf/
 #   - { src: 'boot.properties.j2', dest: '{{idam_path}}/openidm/resolver/boot.properties' }
 # TODO ?
 
-#    - { src: 'repo.jdbc-postgresql-managed-user.json.j2', dest: '/opt/idm/openidm/conf/repo.jdbc.json' }
 cp $IDM_SRC/templates/repo.jdbc-postgresql-managed-user.json.j2 ./idm/conf/repo.jdbc.json || exit 1
-
-#    - { src: 'selfservice-registration.json.j2', dest: '{{idam_path}}/openidm/conf/selfservice-registration.json' }
-# TODO ?
-
-#    - { src: 'selfservice-reset.json.j2', dest: '{{idam_path}}/openidm/conf/selfservice-reset.json' }
-# TODO ?
-
-#    - { src: 'sync.json.j2', dest: '{{idam_path}}/openidm/conf/sync.json' }
-# TODO ?
-
-#    - { src: 'authentication.json.j2', dest: '{{idam_path}}/openidm/conf/authentication.json' }
-# TODO ?
-
-#    - { src: 'provisioner.openicf-ldap.json.j2', dest: '{{idam_path}}/openidm/conf/provisioner.openicf-ldap.json' }
-# TODO ?
-
-#    - { src: 'external.email.json.j2', dest: '{{idam_path}}/openidm/conf/external.email.json' }
-# TODO ?
-
-#    - { src: 'ui-configuration.json.j2', dest: '{{idam_path}}/openidm/conf/ui-configuration.json' }
-# TODO ?
-
-#    - { src: 'emailTemplate-welcome.json.j2', dest: '{{idam_path}}/openidm/conf/emailTemplate-welcome.json' }
-# TODO ?
-
-#    - { src: 'managed.json.j2', dest: '{{idam_path}}/openidm/conf/managed.json' }
-# TODO ?
-
-#    - { src: 'schedule-sunset-task.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-sunset-task.json' }
-# TODO ?
-
-#    - { src: 'schedule-reconcile-accounts.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-reconcile-accounts.json' }
-# TODO ?
-
-#    - { src: 'schedule-reconcile-roles.json.j2', dest: '{{idam_path}}/openidm/conf/schedule-reconcile-roles.json' }
-# TODO ?
-
-#    - { src: 'sunset.js.j2', dest: '{{idam_path}}/openidm/script/sunset.js' }
-# TODO ?
+cp $IDM_SRC/templates/selfservice-registration.json.j2 ./idm/conf/selfservice-registration.json || exit 1
+cp $IDM_SRC/templates/selfservice-reset.json.j2 ./idm/conf/selfservice-reset.json || exit 1
+cp $IDM_SRC/templates/sync.json.j2 ./idm/conf/sync.json || exit 1
+cp $IDM_SRC/templates/authentication.json.j2 ./idm/conf/authentication.json || exit 1
+cp $IDM_SRC/templates/provisioner.openicf-ldap.json.j2 ./idm/conf/provisioner.openicf-ldap.json || exit 1
+cp $IDM_SRC/templates/external.email.json.j2 ./idm/conf/external.email.json || exit 1
+cp $IDM_SRC/templates/ui-configuration.json.j2 ./idm/conf/ui-configuration.json || exit 1
+cp $IDM_SRC/templates/emailTemplate-welcome.json.j2 ./idm/conf/emailTemplate-welcome.json || exit 1
+cp $IDM_SRC/templates/managed.json.j2 ./idm/conf/managed.json || exit 1
+cp $IDM_SRC/templates/schedule-sunset-task.json.j2 ./idm/conf/schedule-sunset-task.json || exit 1
+cp $IDM_SRC/templates/schedule-reconcile-accounts.json.j2 ./idm/conf/schedule-reconcile-accounts.json || exit 1
+cp $IDM_SRC/templates/schedule-reconcile-roles.json.j2 ./idm/conf/schedule-reconcile-roles.json || exit 1
+cp $IDM_SRC/templates/sunset.js.j2 ./idm/script/sunset.js || exit 1
 
 #    - { src: 'policy.js.j2', dest: '{{idam_path}}/openidm/bin/defaults/script/policy.js' }
-# TODO ?
+# TODO is this correct (different target dir)?
+cp $IDM_SRC/templates/policy.js.j2 ./idm/script/policy.js || exit 1
 
-#    - { src: '../../shared-templates/blacklist.txt.j2', dest: '{{idam_path}}/openidm/conf/blacklist.txt' }
-# TODO ?
-
-#    - { src: 'endpoint-notify.json.j2', dest: '{{idam_path}}/openidm/conf/endpoint-notify.json' }
-# TODO ?
-
-#    - { src: 'script.json.j2', dest: '{{idam_path}}/openidm/conf/script.json' }
-# TODO ?
-
-#    - { src: 'access.js.j2', dest: '{{idam_path}}/openidm/script/access.js' }
-# TODO ?
-
-#    - { src: 'notify.groovy.j2', dest: '{{idam_path}}/openidm/script/notify.groovy' }
-# TODO ?
-
-#    - { src: 'audit.json.j2', dest: '{{idam_path}}/openidm/conf/audit.json' }
-# TODO ?
+cp ./cnp-idam-packer/ansible/shared-templates/blacklist.txt.j2 ./idm/conf/blacklist.txt || exit 1
+cp $IDM_SRC/templates/endpoint-notify.json.j2 ./idm/conf/endpoint-notify.json || exit 1
+cp $IDM_SRC/templates/script.json.j2 ./idm/conf/script.json || exit 1
+cp $IDM_SRC/templates/access.js.j2 ./idm/script/access.js || exit 1
+cp $IDM_SRC/templates/notify.groovy.j2 ./idm/script/notify.groovy || exit 1
+cp $IDM_SRC/templates/audit.json.j2 ./idm/conf/audit.json || exit 1
 
 #    - { src: 'idm_keystore.sh.j2', dest: '/opt/idam/idm_keystore.sh' }
 # TODO ?
@@ -273,17 +232,13 @@ cp $IDM_SRC/templates/repo.jdbc-postgresql-managed-user.json.j2 ./idm/conf/repo.
 #    - { src: 'download_keystore.sh.j2', dest: '/opt/idam/download_keystore.sh' }
 # TODO ?
 
-
 # remove lines starting with {%
 sed -i '' '/^{%/ d' ./idm/script/sunset.js || exit 1
-# todo: all the rest of the configuration needs to be checked if it's correct
 
-#cp $IDM_SRC/templates/* ./idm/conf || exit 1
+# todo sbstitutions
 
-# strip all .j2 files of its suffix
-for file in ./idm/conf/*.j2; do
-  mv -- "$file" "${file%.j2}" || exit 1
-done
+
+
 
 echo "OK"
 
