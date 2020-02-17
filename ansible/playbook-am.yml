@@ -1,0 +1,31 @@
+---
+- name: Bring the Docker containers UP
+  hosts: localhost
+  tasks:
+    - name: Bring the AM Docker container UP
+      docker_container:
+        name: am
+        image: "fr-local-am-base:latest"
+        privileged: yes
+    - name: Bring the DS Userstore container UP
+      docker_container:
+        name: userstore
+        image: "fr-local-ds-base:latest"
+    - name: Bring the DS CTSStore container UP
+      docker_container:
+        name: ctsstore
+        image: "fr-local-ds-base:latest"
+
+# todo prepare userstore
+- name: Prepare DS Userstore Image
+  hosts: userstore
+  roles:
+    - name: "../cnp-idam-packer/ansible/roles/forgerock_ds"
+
+# todo prepare ctsstore
+
+#- name: Prepare AM Image
+#  hosts: am
+#  roles:
+#    - name: "../cnp-idam-packer/ansible/roles/tomcat"
+#    - name: "../cnp-idam-packer/ansible/roles/forgerock_am"

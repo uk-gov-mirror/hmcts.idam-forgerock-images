@@ -3,3 +3,9 @@ all:
     am:
       ansible_connection: docker
       ansible_python_interpreter: python
+    userstore:
+      ansible_connection: docker
+      ansible_python_interpreter: python
+    ctsstore:
+      ansible_connection: docker
+      ansible_python_interpreter: python
