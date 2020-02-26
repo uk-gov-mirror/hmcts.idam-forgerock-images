@@ -1,5 +1,5 @@
 domain: .minikube.local
 config:
-  importPath: /dev/am
+  importPath: /git/config/dev/am
 image:
   repository: forgerock/amster

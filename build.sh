@@ -45,15 +45,15 @@ function requireEnvVariable() {
 }
 
 function printUsage() {
-  local padding=20
+  local ptrn="  %-20s\t%s\n"
   printf "Usage: %s command\n" "$(basename $0)"
   printf "Where command is one of:\n"
-  printf "  %-${padding}s\tBuilds a base downloader Docker Image, required for building all other images.\n" "build-downloader"
-  printf "  %-${padding}s\tBuilds all required ForgeRock Docker Images, required a Downloader image as a base image.\n" "build-fr-all"
-  printf "  %-${padding}s\tConfigures local Kubernetes for ForgeRock deployment.\n" "configure"
-  printf "  %-${padding}s\tDeploys ForgeRock locally using Minikube. All images need to be built beforehand.\n" "deploy"
-  printf "  %-${padding}s\tRedeploys ForgeRock locally using Minikube. Combines undeploy, configure and deploy.\n" "redeploy"
-  printf "  %-${padding}s\tUndeploys ForgeRock locally using Minikube.\n" "undeploy"
+  printf "$ptrn" "build-downloader" "Builds a base downloader Docker Image, required for building all other images."
+  printf "$ptrn" "build-fr-all" "Builds all required ForgeRock Docker Images, required a Downloader image as a base image."
+  printf "$ptrn" "configure" "Configures local Kubernetes for ForgeRock deployment."
+  printf "$ptrn" "deploy" "Deploys ForgeRock locally using Minikube. All images need to be built beforehand."
+  printf "$ptrn" "redeploy" "Redeploys ForgeRock locally using Minikube. Combines undeploy, configure and deploy."
+  printf "$ptrn" "undeploy" "Undeploys ForgeRock locally using Minikube."
 }
 
 function switchToK8sDockerRegistry() {
