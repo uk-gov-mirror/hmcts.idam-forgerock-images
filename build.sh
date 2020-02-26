@@ -4,45 +4,49 @@ FR_VERSION=6.5.2
 
 # ======================================================================================================================
 # ======================================================================================================================
-function title() {
-  echo -e "\n==> $1"
+function printStepTitle() {
+  echo -e "\n==> $1\n"
 }
 
-function header() {
+function printHeader() {
   cat <<EOF
-================================
-FORGEROCK IMAGES BUILDING SCRIPT
-================================
+====================================
+FORGEROCK K8S IMAGES BUILDING SCRIPT
+====================================
 EOF
 }
 
-function check_dependency() {
+function checkDependency() {
   printf -- "- %-15s" "$1"
   [ -x "$(command -v "$1")" ] || { printf -- "not found!\n" && exit 1; }
   printf -- "ok\n"
 }
 
-function check_dependencies() {
-  echo "Checking dependencies..."
-  check_dependency git
-  check_dependency docker
-  check_dependency kubectl
-  check_dependency helm
-  check_dependency kubectx
-  check_dependency stern
-  check_dependency minikube
-  check_dependency kubens
-  check_dependency VirtualBox
+function checkDependencies() {
+  echo "Checking required dependencies..."
+  checkDependency git
+  checkDependency docker
+  checkDependency kubectl
+  checkDependency helm
+  [ "$(helm version | grep -c v2)" -gt "0" ] || {
+    echo "Helm version 2 is required. Version 3 is not supported."
+    exit 1
+  }
+  checkDependency kubectx
+  checkDependency stern
+  checkDependency minikube
+  checkDependency kubens
+  checkDependency VirtualBox
 }
 
-function require_variable() {
+function requireEnvVariable() {
   [ -z "${!1}" ] && { echo "This operation requires the \"$1\" variable which was not found (or was empty)!" && exit 1; }
   echo "Found \$${1}."
 }
 
-function show_help() {
-  padding=20
-  printf "Usage: %s command\n" "$0"
+function printUsage() {
+  local padding=20
+  printf "Usage: %s command\n" "$(basename $0)"
   printf "Where command is one of:\n"
   printf "  %-${padding}s\tBuilds a base downloader Docker Image, required for building all other images.\n" "build-downloader"
   printf "  %-${padding}s\tBuilds all required ForgeRock Docker Images, required a Downloader image as a base image.\n" "build-fr-all"
@@ -50,121 +54,134 @@ function show_help() {
   printf "  %-${padding}s\tDeploys ForgeRock locally using Minikube. All images need to be built beforehand.\n" "deploy"
   printf "  %-${padding}s\tRedeploys ForgeRock locally using Minikube. Combines undeploy, configure and deploy.\n" "redeploy"
   printf "  %-${padding}s\tUndeploys ForgeRock locally using Minikube.\n" "undeploy"
-  printf "  %-${padding}s\tUpdates the ForgeRock configuration using IDAM Packer repository.\n" "update-fr-config"
 }
 
-function turn_k8s_docker_on() {
-  title "Switching to the internal Minikube Docker registry..."
+function switchToK8sDockerRegistry() {
+  printStepTitle "Switching to the internal Minikube Docker registry..."
   eval "$(minikube -p minikube docker-env --shell bash)" || exit 1
+  echo "OK"
 }
 
-function build_downloader() {
-  title "Building the ForgeRock downloader Docker Image.."
-  require_variable "FR_API_KEY"
-  turn_k8s_docker_on
+function buildFRDownloader() {
+  printStepTitle "Building the ForgeRock downloader Docker Image.."
+  requireEnvVariable "FR_API_KEY"
 
-  docker build --build-arg API_KEY=$FR_API_KEY --tag forgerock/downloader -f forgeops/docker/downloader/Dockerfile forgeops/docker/downloader || exit 1
+  checkDependencies
+  startMinikube
+  switchToK8sDockerRegistry
+
+  docker build --build-arg API_KEY="$FR_API_KEY" --tag forgerock/downloader -f forgeops/docker/downloader/Dockerfile forgeops/docker/downloader || exit 1
 }
 
-function build_and_push() {
-  title "Building $1 Docker Image.."
-  turn_k8s_docker_on
+function buildAndPushDockerImage() {
+  printStepTitle "Building $1 Docker Image.."
 
   docker build --tag forgerock/$1:$FR_VERSION -f forgeops/docker/$1/Dockerfile forgeops/docker/$1 || exit 1
 }
 
-function build_fr_all() {
-  title "Building all the ForgeRock Docker Images..."
+function buildFRAppsImages() {
+  printStepTitle "Building all the ForgeRock Docker Images..."
 
-  build_and_push openam
-  build_and_push openidm
-  build_and_push ds
-  build_and_push amster
+  checkDependencies
+  startMinikube
+  switchToK8sDockerRegistry
+
+  buildAndPushDockerImage openam
+  buildAndPushDockerImage openidm
+  buildAndPushDockerImage ds
+  buildAndPushDockerImage amster
 }
 
-function configure() {
-  title "Configuring local Kubernetes..."
-  check_dependencies
-  require_variable CONFIG_REPO_PRIVATE_KEY_PATH
-
-  title "Starting a Minikube cluster.."
+function startMinikube() {
+  printStepTitle "Starting a Minikube cluster.."
   if [ "$(minikube status | grep -c "Stopped\|Nonexistent")" = "0" ]; then
     echo "Minikube already running."
   else
     minikube start --memory=8192 --disk-size=30g --vm-driver=virtualbox --bootstrapper kubeadm --kubernetes-version=v1.15.0 || exit 1
   fi
+}
 
-  title "Setting up Helm on Minikube..."
+function configure() {
+  printStepTitle "Configuring local Kubernetes..."
+
+  requireEnvVariable CONFIG_REPO_PRIVATE_KEY_PATH
+  checkDependencies
+  startMinikube
+  switchToK8sDockerRegistry
+
+  printStepTitle "Setting up Helm on Minikube..."
   if [ -z "$(kubectl get pods --all-namespaces | grep tiller-deploy)" ]; then
     helm init --upgrade --service-account default || exit 1
     echo "Sleeping to give Tiller time to start.."
-    sleep 10
+    sleep 15
   else
     echo "Already set up."
   fi
 
-  title "Enabling Minikube Ingress Controller..."
+  printStepTitle "Enabling Minikube Ingress Controller..."
   minikube addons enable ingress || exit 1
 
-  title "Installing the Certificate Manager..."
+  printStepTitle "Installing the Certificate Manager..."
   if [ -z "$(kubectl get customresourcedefinitions | grep certmanager)" ]; then
     helm install stable/cert-manager --namespace kube-system --version v0.5.0 || exit 1
   else
     echo "Already installed."
   fi
 
-  title "Creating a Kubernetes namespace..."
+  printStepTitle "Creating a Kubernetes namespace..."
   if [ -z "$(kubectl get namespaces | grep forgerock-local)" ]; then
     kubectl create namespace forgerock-local || exit 1
   else
     echo "Namespace already exists."
   fi
 
-  title "Switching namespaces..."
+  printStepTitle "Switching namespaces..."
   kubens forgerock-local || exit 1
 
-  title "Configuring the Configuration Repository Private Key..."
+  printStepTitle "Copying the Configuration Repository Private Key..."
   if [ -f "$CONFIG_REPO_PRIVATE_KEY_PATH" ]; then
+    echo "Copying:"
     cp -v "$CONFIG_REPO_PRIVATE_KEY_PATH" forgeops/helm/frconfig/secrets/id_rsa || exit 1
   else
     echo "File not found: $CONFIG_REPO_PRIVATE_KEY_PATH"
     exit 1
   fi
 
-  title "Installing frconfig Helm Chart..."
-  if [ -z "$(helm list --all | grep frconfig)" ]; then
-    helm install --name frconfig forgeops/helm/frconfig --values values/frconfig.yaml || exit 1
-  else
-    echo "Already installed."
+  printStepTitle "Installing frconfig Helm Chart..."
+  if [ ! -z "$(helm list --all | grep frconfig)" ]; then
+    echo "Already installed. Reinstalling.."
+    helm delete --purge frconfig || exit 1
   fi
+  helm install --name frconfig forgeops/helm/frconfig --values values/frconfig.yaml || exit 1
 
-  title "Cleaning up..."
+  printStepTitle "Cleaning up..."
+  echo "Deleting:"
   rm -v forgeops/helm/frconfig/secrets/id_rsa || exit 1
 }
 
 function deploy() {
-  title "Deploying ForgeRock to Kubernetes..."
+  printStepTitle "Deploying ForgeRock to Kubernetes..."
 
-  title "Installing the directory server for the configuration store Helm chart..."
+  checkDependencies
+  startMinikube
+
+  printStepTitle "Installing the directory server for the configuration store Helm chart..."
   helm install --name configstore forgeops/helm/ds --values values/configstore.yaml || exit 1
 
-  title "Installing the directory server for the user store Helm chart..."
+  printStepTitle "Installing the directory server for the user store Helm chart..."
   helm install --name userstore forgeops/helm/ds --values values/userstore.yaml || exit 1
 
-  title "Installing the directory server for the CTS store Helm chart..."
+  printStepTitle "Installing the directory server for the CTS store Helm chart..."
   helm install --name ctsstore forgeops/helm/ds --values values/ctsstore.yaml || exit 1
 
-  title "Installing the AM and Amster Helm chart..."
+  printStepTitle "Installing the AM and Amster Helm chart..."
   helm install --name openam forgeops/helm/openam --values values/openam.yaml || exit 1
   helm install --name amster forgeops/helm/amster --values values/amster.yaml || exit 1
 
-  title "Listing the current pods..."
+  printStepTitle "Listing the current pods..."
   kubectl get pods || exit 1
 
-  #  title "Describing Ingress Controller..."
-  #  kubectl describe ingress || exit 1
-
-  title "Service Information Summary"
+  printStepTitle "Service Information Summary"
   FR_HOST=$(kubectl get ingress -o jsonpath="{.items[0].spec.rules[0].host}")
   FR_IP=$(minikube ip)
   echo "Please add the following line to your /etc/hosts file:"
@@ -172,54 +189,36 @@ function deploy() {
   echo
   echo "AM will be available at: https://$FR_HOST/XUI/?service=adminconsoleservice"
   echo "Your \"amadmin\" user password: $(kubectl get configmaps amster-config -o yaml | grep -o 'adminPwd \"\(.*\)\"')"
-  echo
-  echo "NOTE: Please remember to set up your browser/system to always trust FR self-signed certificate!"
-  echo "      (more info: https://www.robpeck.com/2010/10/google-chrome-mac-os-x-and-self-signed-ssl-certificates/)"
 }
 
 function undeploy() {
-  title "Undeploying ForgeRock..."
+  printStepTitle "Undeploying ForgeRock..."
   forgeops/bin/remove-all.sh -N || exit 1
 }
 
 function cleanup() {
+  printStepTitle "Restoring local Docker settings..."
   eval "$(minikube -p minikube docker-env --shell bash -u)"
-}
-
-function update-fr-config() {
-  title "Updating ForgeRock configuration based on IDAM Packer..."
-  printf "Clearing the old files..."
-  CFG_DIR=forgeops-config/dev
-  rm -Rf $CFG_DIR/am/* || exit 1
-  rm -Rf $CFG_DIR/ds/* || exit 1
-  rm -Rf f$CFG_DIR/idm/* || exit 1
-  printf " OK\n"
-  printf "Copying AM configuration..."
-  cp -r cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/* $CFG_DIR/am/ || exit 1
-  printf " OK\n"
-
-  git -C forgeops-config status
-  echo "The configuration has been updated. Please remember to git commit/push to make the changes take effect."
 }
 
 # ======================================================================================================================
 # ======================================================================================================================
 trap cleanup SIGINT SIGTERM SIGUSR1 EXIT
-header
+printHeader
 
 # extract the COMMAND
 case "$1" in
 "")
   echo "No command provided!"
-  show_help
+  printUsage
   exit 1
   ;;
 build-downloader)
-  build_downloader
+  buildFRDownloader
   exit 0
   ;;
 build-fr-all)
-  build_fr_all
+  buildFRAppsImages
   exit 0
   ;;
 configure)
@@ -238,13 +237,9 @@ redeploy)
   undeploy && configure && deploy
   exit 0
   ;;
-update-fr-config)
-  update-fr-config
-  exit 0
-  ;;
 *)
   echo "Unknown command \"$1\"!"
-  show_help
+  printUsage
   exit 1
   ;;
 esac
