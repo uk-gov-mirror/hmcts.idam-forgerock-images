@@ -12,6 +12,8 @@
 : ${FORGEROCK_DS_FILE:=DS-6.5.2.zip}
 : ${FORGEROCK_IDM_FILE:=IDM-6.5.0.2.zip}
 
+: ${FORGEROCK_BINARIES_DIR:=bin}
+
 # The name of the branch to take the configuration from (cnp-idam-packer repo)
 : ${CONFIGURATION_BRANCH:=preview}
 
@@ -50,14 +52,14 @@ function update-config() {
   echo "The configuration is currently at version \"${CONFIG_VERSION}\"."
 }
 
-# Makes sure that all the required binary files are present in the bin/ directory
+# Makes sure that all the required binary files are present in the binary directory
 function check-binary-files-exist() {
   header "Checking for ForgeRock binary files..."
   local error=false
   for file in ${FORGEROCK_REQUIRED_BINARIES[*]}; do
-    [ -f "bin/$file" ] || { error=true && echo "- A binary file \"$file\" has not been found!"; }
+    [ -f "$FORGEROCK_BINARIES_DIR/$file" ] || { error=true && echo "- A binary file \"$file\" has not been found!"; }
   done
-  [ "$error" = true ] && echo -e "\nSome binary files are missing. Please make sure they're available in the bin/ directory." && exit 1
+  [ "$error" = true ] && echo -e "\nSome binary files are missing. Please make sure they're available in the binary directory." && exit 1
   echo "OK"
 }
 
@@ -104,8 +106,8 @@ cp -R $AM_SRC ./am/openam_conf || exit 1
 echo "OK"
 
 header "Copying AM binary files.."
-cp "./bin/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || exit 1
-cp "./bin/$FORGEROCK_AMSTER_FILE" ./am/openam_conf/amster.zip || exit 1
+cp "$FORGEROCK_BINARIES_DIR/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || exit 1
+cp "$FORGEROCK_BINARIES_DIR/$FORGEROCK_AMSTER_FILE" ./am/openam_conf/amster.zip || exit 1
 echo "OK"
 
 build-docker-image "am"
@@ -178,7 +180,7 @@ cp ./cnp-idam-packer/ansible/shared-templates/blacklist.txt.j2 ./ds/bootstrap/bl
 echo "OK"
 
 header "Copying DS binary files.."
-cp "./bin/$FORGEROCK_DS_FILE" ./ds/opendj.zip || exit 1
+cp "$FORGEROCK_BINARIES_DIR/$FORGEROCK_DS_FILE" ./ds/opendj.zip || exit 1
 echo "OK"
 
 build-docker-image "ds"
@@ -243,7 +245,7 @@ sed -i '' '/^{%/ d' ./idm/script/sunset.js || exit 1
 echo "OK"
 
 header "Copying IDM binary files.."
-cp "./bin/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
+cp "$FORGEROCK_BINARIES_DIR/$FORGEROCK_IDM_FILE" ./idm/ || exit 1
 echo "OK"
 
 build-docker-image "idm"
