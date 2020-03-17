@@ -105,9 +105,7 @@ AM_SRC="./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/config_f
 cp -R $AM_SRC ./am/openam_conf || exit 1
 echo "OK"
 
-#cp "$FORGEROCK_BINARIES_DIR/idam-health-checker-2.0.2.jar" ./am/idam-health-checker.jar
-cp -v /Users/radoslaworlowski/dev/IDAM/idam-health-checker/build/libs/idam-health-checker-2.0.2-shadow.jar ./am/ || exit 1
-cp -v /Users/radoslaworlowski/dev/IDAM/azure-keyvault-jca-provider/build/libs/azure-keyvault-jca-provider-1.3.1-all.jar ./am/ || exit 1
+cp "$FORGEROCK_BINARIES_DIR/idam-health-checker-2.0.2.jar" ./am/idam-health-checker.jar
 
 header "Copying AM binary files.."
 cp "$FORGEROCK_BINARIES_DIR/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || exit 1
