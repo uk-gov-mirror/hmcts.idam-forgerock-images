@@ -105,23 +105,12 @@ AM_SRC="./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/config_f
 cp -R $AM_SRC ./am/openam_conf || exit 1
 echo "OK"
 
-cp "$FORGEROCK_BINARIES_DIR/idam-health-checker-2.0.2.jar" ./am/idam-health-checker.jar
-
 header "Copying AM binary files.."
 cp "$FORGEROCK_BINARIES_DIR/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || exit 1
 cp "$FORGEROCK_BINARIES_DIR/$FORGEROCK_AMSTER_FILE" ./am/openam_conf/amster.zip || exit 1
 echo "OK"
 
 build-docker-image "am"
-exit 0
-
-# java -jar -Xmx256M -Dspring.application.name=health-am-forgerock-am-idam-preview000000 \
-# -Dspring.profiles.active=am,insightconsole \
-# -Djavax.net.ssl.trustStore=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.242.b08-0.el7_7.x86_64/jre/lib/security/cacerts \
-# -Dazure.keyvault.uri=https://idamvaultpreview.vault.azure.net/ \
-# -Dam.root=https://forgerock-am.service.core-compute-idam-preview.internal:8443/openam \
-# -Dam.healthprobe.identity.host=forgerock-am.service.core-compute-idam-preview.internal \
-# -Dlogging.level.uk.gov.hmcts.reform.idam.health=WARN  health-checker.jar
 
 # ========================
 #            DS
@@ -153,6 +142,9 @@ cp -R $DS_SRC/templates/cts_store/* $DS_TRG/setup_scripts_cts || exit 1
 # delete 00-runme.sh.j2, superseded by 00-runme.sh which changes the script run order
 rm $DS_TRG/setup_scripts_cts/00-runme.sh.j2 || exit 1
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# SUBSTITUTION MOVED TO run.sh
+
 #for file in $DS_TRG/setup_scripts_cfg/*.sh.j2 \
 #  $DS_TRG/setup_scripts_cts/*.sh.j2 \
 #  $DS_TRG/setup_scripts_cts/00-runme.sh; do
@@ -178,8 +170,7 @@ rm $DS_TRG/setup_scripts_cts/00-runme.sh.j2 || exit 1
 #  search-and-replace "{{ openam_cts_password }}" 'OPENAM_PASSWORD' "$file"
 #  search-and-replace "{{ openam_password }}" 'OPENAM_PASSWORD' "$file"
 #done
-
-find-unprocessed-ansible-files "$DS_TRG"
+#find-unprocessed-ansible-files "$DS_TRG"
 
 # strip all .j2 files of its suffix
 for file in $DS_TRG/setup_scripts_cfg/*.j2 $DS_TRG/setup_scripts_cts/*.j2; do
@@ -249,9 +240,6 @@ cp $IDM_SRC/templates/audit.json.j2 ./idm/conf/audit.json || exit 1
 sed -i '' '/^{%/ d' ./idm/script/sunset.js || exit 1
 
 # todo sbstitutions
-
-
-
 
 echo "OK"
 

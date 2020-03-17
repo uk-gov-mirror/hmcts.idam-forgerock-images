@@ -104,14 +104,6 @@ ADD *.sh $FORGEROCK_HOME/
 RUN chown -R tomcat:tomcat $FORGEROCK_HOME/
 RUN chmod -R 777 $FORGEROCK_HOME/
 
-#ADD idam-health-checker.jar /tmp
-ADD idam-health-checker-2.0.2-shadow.jar /tmp/idam-health-checker.jar
-ADD java.security /usr/lib/jvm/java-1.8-openjdk/jre/lib/security/
-#ADD azure-keyvault-jca-provider-preview.jar /usr/lib/jvm/java-1.8-openjdk/jre/lib/ext
-ADD azure-keyvault-jca-provider-1.3.1-all.jar /usr/lib/jvm/java-1.8-openjdk/jre/lib/ext
-#ADD logback-classic-1.2.3.jar /usr/lib/jvm/java-1.8-openjdk/jre/lib/ext
-#ADD logback-core-1.2.3.jar /usr/lib/jvm/java-1.8-openjdk/jre/lib/ext
-
 #USER forgerock
 USER tomcat
 WORKDIR /opt/tomcat
