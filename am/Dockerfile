@@ -88,7 +88,7 @@ RUN echo "tomcat ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/tomcat && \
 # Settings for Tomcat
 ADD tomcat_conf/server.xml "$CATALINA_HOME"/conf/server.xml
 ADD tomcat_conf/context.xml "$CATALINA_HOME"/conf/context.xml
-ADD secrets/keystore.jceks "$CATALINA_HOME"/.keystore
+#ADD secrets/keystore.jceks "$CATALINA_HOME"/.keystore
 
 
 ADD openam_conf/*.amster "$FORGEROCK_HOME"/amster/
@@ -98,11 +98,19 @@ ADD openam_conf/config_files/ "$FORGEROCK_HOME"/amster/config_files/
 ENV CUSTOMIZE_AM /opt/tomcat/customize-am.sh
 
 ADD *.sh $FORGEROCK_HOME/
-ADD secrets "$FORGEROCK_HOME"/amster/secrets/
+#ADD secrets "$FORGEROCK_HOME"/amster/secrets/
 
 ## TODO change to use forgerock user
 RUN chown -R tomcat:tomcat $FORGEROCK_HOME/
 RUN chmod -R 777 $FORGEROCK_HOME/
+
+#ADD idam-health-checker.jar /tmp
+ADD idam-health-checker-2.0.2-shadow.jar /tmp/idam-health-checker.jar
+ADD java.security /usr/lib/jvm/java-1.8-openjdk/jre/lib/security/
+#ADD azure-keyvault-jca-provider-preview.jar /usr/lib/jvm/java-1.8-openjdk/jre/lib/ext
+ADD azure-keyvault-jca-provider-1.3.1-all.jar /usr/lib/jvm/java-1.8-openjdk/jre/lib/ext
+#ADD logback-classic-1.2.3.jar /usr/lib/jvm/java-1.8-openjdk/jre/lib/ext
+#ADD logback-core-1.2.3.jar /usr/lib/jvm/java-1.8-openjdk/jre/lib/ext
 
 #USER forgerock
 USER tomcat

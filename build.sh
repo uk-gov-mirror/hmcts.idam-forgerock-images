@@ -33,7 +33,7 @@ function build-docker-image() {
   DOCKER_TAG_FINAL="${DOCKER_IMAGE_PREFIX}-${1}:${CONFIG_VERSION}"
   DOCKER_TAG_LATEST="${DOCKER_IMAGE_PREFIX}-${1}:latest"
   echo "Building the image and tagging as \"$DOCKER_TAG_FINAL\" and \"$DOCKER_TAG_LATEST\"."
-#  docker build --tag "$DOCKER_TAG_FINAL" --tag "$DOCKER_TAG_LATEST" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
+  docker build --tag "$DOCKER_TAG_FINAL" --tag "$DOCKER_TAG_LATEST" "./$1" || { echo "Docker build ($1) FAILED!" && exit 1; }
 }
 
 # Performs a git operation on the config sub-module
@@ -47,7 +47,7 @@ function update-config() {
   header "Updating config from git submodule.."
   CURR_BRANCH="$(git-branch)"
   [ "$CURR_BRANCH" = "$CONFIGURATION_BRANCH" ] || { echo "The current branch of the configuration repository is \"$CURR_BRANCH\", expected: \"$CONFIGURATION_BRANCH\"" && exit 1; }
-  { git-config fetch && git-config pull; } || { echo "Git submodule update failed!" && exit 1; }
+#  { git-config fetch && git-config pull; } || { echo "Git submodule update failed!" && exit 1; }
   CONFIG_VERSION=$(git-config show --format="%cd" --date=format:%Y.%m.%d_%H.%M.%S)_${CONFIGURATION_BRANCH}
   echo "The configuration is currently at version \"${CONFIG_VERSION}\"."
 }
@@ -105,12 +105,25 @@ AM_SRC="./cnp-idam-packer/ansible/roles/forgerock_am/files/config_files/config_f
 cp -R $AM_SRC ./am/openam_conf || exit 1
 echo "OK"
 
+#cp "$FORGEROCK_BINARIES_DIR/idam-health-checker-2.0.2.jar" ./am/idam-health-checker.jar
+cp -v /Users/radoslaworlowski/dev/IDAM/idam-health-checker/build/libs/idam-health-checker-2.0.2-shadow.jar ./am/ || exit 1
+cp -v /Users/radoslaworlowski/dev/IDAM/azure-keyvault-jca-provider/build/libs/azure-keyvault-jca-provider-1.3.1-all.jar ./am/ || exit 1
+
 header "Copying AM binary files.."
 cp "$FORGEROCK_BINARIES_DIR/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || exit 1
 cp "$FORGEROCK_BINARIES_DIR/$FORGEROCK_AMSTER_FILE" ./am/openam_conf/amster.zip || exit 1
 echo "OK"
 
 build-docker-image "am"
+exit 0
+
+# java -jar -Xmx256M -Dspring.application.name=health-am-forgerock-am-idam-preview000000 \
+# -Dspring.profiles.active=am,insightconsole \
+# -Djavax.net.ssl.trustStore=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.242.b08-0.el7_7.x86_64/jre/lib/security/cacerts \
+# -Dazure.keyvault.uri=https://idamvaultpreview.vault.azure.net/ \
+# -Dam.root=https://forgerock-am.service.core-compute-idam-preview.internal:8443/openam \
+# -Dam.healthprobe.identity.host=forgerock-am.service.core-compute-idam-preview.internal \
+# -Dlogging.level.uk.gov.hmcts.reform.idam.health=WARN  health-checker.jar
 
 # ========================
 #            DS
