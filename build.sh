@@ -72,7 +72,7 @@ function prepare() {
 }
 
 function search-and-replace() {
-  sed -i '' "s/$1/$2/" "$3" || exit 1
+  sed -i  "s/$1/$2/" "$3" || exit 1
 }
 
 # checks for the files still containing {{
@@ -196,11 +196,11 @@ IDM_SRC="./cnp-idam-packer/ansible/roles/forgerock_idm"
 mkdir -p ./idm/script || exit 1
 mkdir -p ./idm/security || exit 1
 mkdir -p ./idm/conf || exit 1
+mkdir -p ./idm/resolver || exit 1
 
-# copy conf/
-#   - { src: 'boot.properties.j2', dest: '{{idam_path}}/openidm/resolver/boot.properties' }
-# TODO ?
 
+cp $IDM_SRC/templates/boot.properties.j2 ./idm/resolver/boot.properties || exit 1
+cp $IDM_SRC/templates/datasource.jdbc-default.json.j2 ./idm/conf/datasource.jdbc-default.json || exit 1
 cp $IDM_SRC/templates/repo.jdbc-postgresql-managed-user.json.j2 ./idm/conf/repo.jdbc.json || exit 1
 cp $IDM_SRC/templates/selfservice-registration.json.j2 ./idm/conf/selfservice-registration.json || exit 1
 cp $IDM_SRC/templates/selfservice-reset.json.j2 ./idm/conf/selfservice-reset.json || exit 1
@@ -215,11 +215,7 @@ cp $IDM_SRC/templates/schedule-sunset-task.json.j2 ./idm/conf/schedule-sunset-ta
 cp $IDM_SRC/templates/schedule-reconcile-accounts.json.j2 ./idm/conf/schedule-reconcile-accounts.json || exit 1
 cp $IDM_SRC/templates/schedule-reconcile-roles.json.j2 ./idm/conf/schedule-reconcile-roles.json || exit 1
 cp $IDM_SRC/templates/sunset.js.j2 ./idm/script/sunset.js || exit 1
-
-#    - { src: 'policy.js.j2', dest: '{{idam_path}}/openidm/bin/defaults/script/policy.js' }
-# TODO is this correct (different target dir)?
 cp $IDM_SRC/templates/policy.js.j2 ./idm/script/policy.js || exit 1
-
 cp ./cnp-idam-packer/ansible/shared-templates/blacklist.txt.j2 ./idm/conf/blacklist.txt || exit 1
 cp $IDM_SRC/templates/endpoint-notify.json.j2 ./idm/conf/endpoint-notify.json || exit 1
 cp $IDM_SRC/templates/script.json.j2 ./idm/conf/script.json || exit 1
@@ -237,9 +233,55 @@ cp $IDM_SRC/templates/audit.json.j2 ./idm/conf/audit.json || exit 1
 # TODO ?
 
 # remove lines starting with {%
-sed -i '' '/^{%/ d' ./idm/script/sunset.js || exit 1
+sed -i '/^{%/ d' ./idm/script/sunset.js || exit 1
+sed -i '/^{%/ d' ./idm/conf/schedule-reconcile-roles.json || exit 1
+sed -i '/^{%/ d' ./idm/conf/schedule-reconcile-accounts.json || exit 1
+sed -i '/^{%/ d' ./idm/conf/schedule-sunset-task.json  || exit 1
 
-# todo sbstitutions
+# IDM variables
+POSTGRES_HOST="shared-db"
+POSTGRES_PORT="5432"
+POSTGRES_USER="openidm"
+POSTGRES_PASSWORD="Pa55word11"
+SELFSERVICE_REGISTRATION_LINK="" ;
+SELFSERVICE_TOKEN_EXPIRY="1728000" ;
+SELFSERVICE_RESET_LINK="" ;
+BASE_DN="dc=reform,dc=hmcts,dc=net";
+USERSTORE_HOST="userstore";
+USERSTORE_PORT="1389";
+DM_PASSWORD="Pa55word11";
+EMAIL_HOST="smtp-server";
+EMAIL_PORT="1025";
+EMAIL_USERNAME="amido.idam@gmail.com";
+EMAIL_PASSWORD="";
+WELCOME_EMAIL_ENABLED="false";
+
+
+# IDM replace placeholders with variables
+for file in ./idm/conf/*.json; do
+  search-and-replace "{{ psql_host }}" "$POSTGRES_HOST" "$file"
+  search-and-replace "{{ psql_port }}" "$POSTGRES_PORT" "$file"
+  search-and-replace "{{ openidm_repo_port }}" "$POSTGRES_PORT" "$file"
+  search-and-replace "{{ psql_user }}" "$POSTGRES_USER" "$file"
+  search-and-replace "{{ psql_passwd }}" "$POSTGRES_PASSWORD" "$file"
+  search-and-replace "{{ psql_passwd }}" "$POSTGRES_PASSWORD" "$file"
+  search-and-replace "{{selfservice_registration}}" "$SELFSERVICE_REGISTRATION_LINK" "$file"
+  search-and-replace "{{ idm_selfservice_registration_tokenExpiry }}" "$SELFSERVICE_TOKEN_EXPIRY" "$file"
+  search-and-replace "{{selfservice_reset}}" "$SELFSERVICE_RESET_LINK" "$file"
+  search-and-replace "{{idm_selfservice_reset_tokenExpiry}}" "$SELFSERVICE_TOKEN_EXPIRY" "$file"
+  search-and-replace "{{ baseDN }}" "$BASE_DN" "$file"
+  search-and-replace "{{ userStoreHost }}" "$USERSTORE_HOST" "$file"
+  search-and-replace "{{ userStorePort }}" "$USERSTORE_PORT" "$file"
+  search-and-replace "{{ icf_pword }}" "$DM_PASSWORD" "$file"
+  search-and-replace "?ssl=true" "" "$file"
+  search-and-replace "\"ssl\" : true" "\"ssl\" : false" "$file"
+  search-and-replace "{{ email_host }}" "$EMAIL_HOST" "$file"
+  search-and-replace "{{ email_port }}" "$EMAIL_PORT" "$file"
+  search-and-replace "{{ email_username }}" "$EMAIL_USERNAME" "$file"
+  search-and-replace "{{ email_pword }}" "$EMAIL_PASSWORD" "$file"
+  search-and-replace "{{ welcome_email_enabled|lower }}" "$WELCOME_EMAIL_ENABLED" "$file"
+
+done
 
 echo "OK"
 

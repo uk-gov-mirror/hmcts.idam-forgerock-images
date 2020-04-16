@@ -15,11 +15,13 @@ RUN unzip -q /tmp/idm.zip && rm -f /tmp/idm.zip
 
 WORKDIR /opt/openidm
 
-RUN rm -fr conf
+RUN rm -f conf/repo.ds.json
 RUN rm -rf script
 
 COPY conf conf
 COPY security security
 COPY script script
+COPY lib lib
+COPY bundle bundle
 
 ENTRYPOINT ["/run.sh" ]
