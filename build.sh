@@ -270,7 +270,7 @@ for file in ./idm/conf/*.json; do
   search-and-replace "{{selfservice_reset}}" "$SELFSERVICE_RESET_LINK" "$file"
   search-and-replace "{{idm_selfservice_reset_tokenExpiry}}" "$SELFSERVICE_TOKEN_EXPIRY" "$file"
   search-and-replace "{{ baseDN }}" "$BASE_DN" "$file"
-  search-and-replace "{{ userStoreHost }}" "$USERSTORE_HOST" "$file"
+  search-and-replace "forgerock-ds-userstore-2.{{ domainSuffix }}" "$USERSTORE_HOST" "$file"
   search-and-replace "{{ userStorePort }}" "$USERSTORE_PORT" "$file"
   search-and-replace "{{ icf_pword }}" "$DM_PASSWORD" "$file"
   search-and-replace "?ssl=true" "" "$file"

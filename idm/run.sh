@@ -3,7 +3,7 @@
 IDM_JSN='Content-Type: application/json'
 IDM_URL=http://${OPENIDM_HOSTNAME}:${OPENIDM_PORT}/openidm
 IDM_USR='X-OpenIDM-Username: openidm-admin'
-IDM_PWD='X-OpenIDM-Password: Pa55word11'
+IDM_PWD='X-OpenIDM-Password: openidm-admin'
 
 IDAM_SYSTEM_OWNER_DATA='{"name" : "IDAM-SYSTEM-OWNER","description" : "I am a system owner..."}'
 IDAM_ADMIN_USER_DATA='{"name" : "IDAM-ADMIN-USER","description" : "I am a admin user..."}'
@@ -25,7 +25,7 @@ adding_default_user(){
       curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --request GET "${IDM_URL}/info/ping" | grep ACTIVE_READY
       if [ $? = 0 ];
       then
-        echo "Configuration store is up"
+        echo "IDM is up"
         readyToTest=false
         break
       else
