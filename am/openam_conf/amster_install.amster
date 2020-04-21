@@ -15,7 +15,7 @@ install-openam \
 --lbPrimaryUrl serverUrl \
 --lbSiteName amido \
 --serverUrl internalServer \
---cookieDomain fr-am \
+--cookieDomain fr-am.local \
 --adminPwd password \
 --cfgStore dirServer \
 --cfgStoreHost ldapHost \

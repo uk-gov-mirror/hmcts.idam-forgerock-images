@@ -110,6 +110,11 @@ cp "$FORGEROCK_BINARIES_DIR/$FORGEROCK_AM_FILE" ./am/openam_conf/openam.war || e
 cp "$FORGEROCK_BINARIES_DIR/$FORGEROCK_AMSTER_FILE" ./am/openam_conf/amster.zip || exit 1
 echo "OK"
 
+#Variable substitutions
+search-and-replace "\"org.forgerock.services.cts.store.ssl.enabled\" : true" "\"org.forgerock.services.cts.store.ssl.enabled\" : false"  "./am/openam_conf/config_files/global/DefaultCtsDataStoreProperties.json"
+search-and-replace "\"sun-idrepo-ldapv3-config-connection-mode\" : \"LDAPS\"" "\"sun-idrepo-ldapv3-config-connection-mode\" : \"AMSTER{ldapProtocol}\"" "./am/openam_conf/config_files/realms/root-hmcts/OpenDJ/OpenDJ.json"
+search-and-replace "forgerock-ds-userstore-2.AMSTER{domainSuffix}:AMSTER{ds_user_port}|server1" "AMSTER{ds_user_host}:AMSTER{ldapcfgUserStorePort}" "./am/openam_conf/config_files/realms/root-hmcts/OpenDJ/OpenDJ.json"
+
 build-docker-image "am"
 
 # ========================

@@ -32,10 +32,10 @@ ENV HTTP_STRING http:
 ENV FR_APP openam
 ENV USER_STORE_HOST userstore
 ENV CFG_STORE_HOST cfgAndCts
-ENV CTS_CFG_HOSTS cfgAndCts
-ENV USER_STORE_PORT 1636
-ENV CFG_STORE_PORT 1636
-ENV CTS_PORT 1636
+ENV CTS_CFG_HOSTS cfgAndCts:1389
+ENV USER_STORE_PORT 1389
+ENV CFG_STORE_PORT 1389
+ENV CTS_PORT 1389
 ENV ROOT_USER_DN cn=Directory Manager
 ENV ROOT_USER_PASSWORD Pa55word11
 ENV CTS_TOKEN_BASEDN ou=famrecords,ou=openam-session,ou=tokens,dc=reform,dc=hmcts,dc=net
@@ -44,11 +44,12 @@ ENV OPENAM_CTS_PASSWORD Pa55word11
 #ENV OPENAM_CTS_USERNAME_UID uid=am-config,ou=admins,ou=tokens,dc=reform,dc=hmcts,dc=net
 ENV OPENAM_CTS_USERNAME_UID cn=Directory Manager
 #ENV OPENAM_CTS_USERNAME_UID uid=openam,ou=admins,dc=reform,dc=hmcts,dc=net
-ENV LDAPS_PORT_CTS 1636
+ENV LDAPS_PORT_CTS 1389
 ENV AM_BOOTSTRAP_FILE /opt/tomcat/.openamcfg/AMConfig_opt_tomcat_webapps_openam
 ENV OPENAM_DIR /opt/tomcat/openam
 ENV WEB_APP "http://fr-am.local"
 ENV DEFAULT_KEYSTORE_TYPE JCEKS
+ENV DEFAULT_KEYSTORE_PROVIDER_NAME SunJCE
 ENV CERTIFICATE_ALIAS_NAME server-cert
 ENV AM_COOKIE_NAME Idam.Session
 #ENV AM_COOKIE_NAME iPlanetDirectoryPro
