@@ -68,7 +68,7 @@ ENV CATALINA_HOME=/opt/tomcat
 ENV CATALINA_BASE=/opt/tomcat
 
 # openldap-clients is needed to test for the configuration store.
-RUN apk add --no-cache su-exec unzip curl bash openldap-clients sudo \
+RUN apk add --no-cache su-exec unzip curl bash openldap-clients sudo jq \
   && rm -fr /usr/local/tomcat/webapps/* \
   && unzip -q /tmp/openam.war -d  "$CATALINA_HOME"/webapps/openam \
   && rm /tmp/openam.war \
@@ -94,6 +94,7 @@ ADD tomcat_conf/context.xml "$CATALINA_HOME"/conf/context.xml
 
 ADD openam_conf/*.amster "$FORGEROCK_HOME"/amster/
 ADD openam_conf/config_files/ "$FORGEROCK_HOME"/amster/config_files/
+ADD import_internal_roles.sh "$FORGEROCK_HOME"/
 
 # Path to optional script to customize the AM web app. Use this script hook to copy in images, web.xml, etc.
 ENV CUSTOMIZE_AM /opt/tomcat/customize-am.sh

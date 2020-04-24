@@ -18,6 +18,7 @@ WORKDIR /opt/openidm
 RUN rm -f conf/repo.ds.json
 RUN rm -rf script
 
+COPY import_internal_roles.sh .
 COPY conf conf
 COPY security security
 COPY script script

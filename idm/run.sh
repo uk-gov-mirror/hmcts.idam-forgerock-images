@@ -5,15 +5,11 @@ IDM_URL=http://${OPENIDM_HOSTNAME}:${OPENIDM_PORT}/openidm
 IDM_USR='X-OpenIDM-Username: openidm-admin'
 IDM_PWD='X-OpenIDM-Password: openidm-admin'
 
-IDAM_SYSTEM_OWNER_DATA='{"name" : "IDAM-SYSTEM-OWNER","description" : "I am a system owner..."}'
-IDAM_ADMIN_USER_DATA='{"name" : "IDAM-ADMIN-USER","description" : "I am a admin user..."}'
-IDAM_SUPER_USER_DATA='{"name" : "IDAM-SUPER-USER","description" : "I am a super user..."}'
-LETTER_HOLDER_DATA='{"name" : "letter-holder","description" : "I am a letter-holder..."}'
-SOLICITOR_DATA='{"name" : "solicitor","description" : "I am a solicitor..."}'
-CITIZEN_DATA='{"name" : "citizen","description" : "I am a citizen..."}'
+IDAM_OWNER_USER='{"userName":"idamOwner@HMCTS.NET","sn":"Owner","givenName":"System",    "mail": "idamOwner@HMCTS.NET","telephoneNumber": "082082082", "password":"Pa55word11" }'
+IDAM_OWNER_USER_ID='666fabc2-ea7d-4f8c-beca-f9cba6483eb7'
 
-USER_DATA='{"userName":"idamOwner@HMCTS.NET","sn":"Owner","givenName":"System",    "mail": "idamOwner@HMCTS.NET","telephoneNumber": "082082082", "password":"Pa55word11!" }'
-USER_ID='666fabc2-ea7d-4f8c-beca-f9cba6483eb7'
+IDAM_TEST_USER='{"userName":"idam@test.localhost","sn":"localhost","givenName":"idam@test",    "mail": "idam@test.localhost@HMCTS.NET","telephoneNumber": "082082082", "password":"Pa55word11" }'
+IDAM_TEST_USER_ID='566fabc2-ea7d-4f8c-beca-f9cba6483eb7'
 
 adding_default_user(){
 
@@ -36,17 +32,14 @@ adding_default_user(){
 
 
   echo "let s create roles"
-  IDAM_SYSTEM_OWNER_ID=$(curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --request POST --data "${IDAM_SYSTEM_OWNER_DATA}"  "${IDM_URL}/managed/role?_action=create " | jq -r ._id)
-  IDAM_ADMIN_USER_ID=$(curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --request POST --data "${IDAM_ADMIN_USER_DATA}"  "${IDM_URL}/managed/role?_action=create " | jq -r ._id)
-  IDAM_SUPER_USER_ID=$(curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --request POST --data "${IDAM_SUPER_USER_DATA}"  "${IDM_URL}/managed/role?_action=create " | jq -r ._id)
-  LETTER_HOLDER_ID=$(curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --request POST --data "${LETTER_HOLDER_DATA}"  "${IDM_URL}/managed/role?_action=create " | jq -r ._id)
-  curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --request POST --data "${SOLICITOR_DATA}"  "${IDM_URL}/managed/role?_action=create"
-  curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --request POST --data "${CITIZEN_DATA}"  "${IDM_URL}/managed/role?_action=create"
-  echo "let s create the user for local test"
-  curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --header "If-None-Match: *" --request PUT --data "${USER_DATA}" "${IDM_URL}/managed/user/${USER_ID}"
-  echo "let s add one role"
-  USER_ROLE_DATA='[{"operation": "add","field": "/roles/-","value": {"_ref" : "managed/role/'${IDAM_SYSTEM_OWNER_ID}'"} }]'
-  curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --request PATCH --data "${USER_ROLE_DATA}" "${IDM_URL}/managed/user/${USER_ID}"
+  /opt/openidm/import_internal_roles.sh
+  echo "lets create users"
+  curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --header "If-None-Match: *" --request PUT --data "${IDAM_OWNER_USER}" "${IDM_URL}/managed/user/${IDAM_OWNER_USER_ID}"
+  curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --header "If-None-Match: *" --request PUT --data "${IDAM_TEST_USER}" "${IDM_URL}/managed/user/${IDAM_TEST_USER_ID}"
+  echo "lets add roles to users"
+  USER_ROLE_DATA='[{"operation": "add","field": "/roles/-","value": {"_ref" : "managed/role/IDAM_SYSTEM_OWNER"} }]'
+  curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --request PATCH --data "${USER_ROLE_DATA}" "${IDM_URL}/managed/user/${IDAM_OWNER_USER_ID}"
+  curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --request PATCH --data "${USER_ROLE_DATA}" "${IDM_URL}/managed/user/${IDAM_TEST_USER_ID}"
 
 }
 

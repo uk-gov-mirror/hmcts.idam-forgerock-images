@@ -66,6 +66,8 @@ bootstrap_openam() {
       run_amster_configurator "install"
       run_amster_configurator "import"
 
+      $FORGEROCK_HOME/import_internal_roles.sh
+
       cat $FORGEROCK_HOME/openam/openam/.storepass|keytool -import -alias server-cert -file $FORGEROCK_HOME/amster/secrets/local.cert.cer -storetype jceks -keystore $FORGEROCK_HOME/openam/openam/keystore.jceks -noprompt
       sudo keytool -importcert -alias server-cert -file $FORGEROCK_HOME/amster/secrets/local.cert.cer -trustcacerts -keystore $JAVA_HOME/lib/security/cacerts -noprompt -storepass changeit
 
