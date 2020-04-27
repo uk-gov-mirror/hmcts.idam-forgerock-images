@@ -48,7 +48,8 @@ function update-config() {
   CURR_BRANCH="$(git-branch)"
   [ "$CURR_BRANCH" = "$CONFIGURATION_BRANCH" ] || { echo "The current branch of the configuration repository is \"$CURR_BRANCH\", expected: \"$CONFIGURATION_BRANCH\"" && exit 1; }
 #  { git-config fetch && git-config pull; } || { echo "Git submodule update failed!" && exit 1; }
-  CONFIG_VERSION=$(git-config show --format="%cd" --date=format:%Y.%m.%d_%H.%M.%S)_${CONFIGURATION_BRANCH}
+  CONFIG_VERSION=$(git-config rev-parse HEAD)_${CONFIGURATION_BRANCH}
+ ## CONFIG_VERSION=1
   echo "The configuration is currently at version \"${CONFIG_VERSION}\"."
 }
 
