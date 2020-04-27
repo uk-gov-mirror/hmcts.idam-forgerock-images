@@ -63,6 +63,7 @@ function grant_admin_permissions () {
               ],
               "members": {
                   "uniqueMember": [
+                     "idam@test.localhost","idamOwner@HMCTS.NET"
                   ]
               },
               "cn": [
