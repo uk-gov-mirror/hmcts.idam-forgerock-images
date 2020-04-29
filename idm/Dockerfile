@@ -24,5 +24,6 @@ COPY security security
 COPY script script
 COPY lib lib
 COPY bundle bundle
+COPY conf/startup.sh startup.sh
 
 ENTRYPOINT ["/run.sh" ]

@@ -228,15 +228,7 @@ cp $IDM_SRC/templates/script.json.j2 ./idm/conf/script.json || exit 1
 cp $IDM_SRC/templates/access.js.j2 ./idm/script/access.js || exit 1
 cp $IDM_SRC/templates/notify.groovy.j2 ./idm/script/notify.groovy || exit 1
 cp $IDM_SRC/templates/audit.json.j2 ./idm/conf/audit.json || exit 1
-
-#    - { src: 'idm_keystore.sh.j2', dest: '/opt/idam/idm_keystore.sh' }
-# TODO ?
-
-#    - { src: 'upload_keystore.sh.j2', dest: '/opt/idam/upload_keystore.sh' }
-# TODO ?
-
-#    - { src: 'download_keystore.sh.j2', dest: '/opt/idam/download_keystore.sh' }
-# TODO ?
+cp $IDM_SRC/templates/startup.sh.j2 ./idm/conf/startup.sh || exit 1
 
 # remove lines starting with {%
 sed -i '/^{%/ d' ./idm/script/sunset.js || exit 1
@@ -261,10 +253,13 @@ EMAIL_PORT="1025";
 EMAIL_USERNAME="amido.idam@gmail.com";
 EMAIL_PASSWORD="";
 WELCOME_EMAIL_ENABLED="false";
+IDAM_PATH="\/opt"
+KEYSTORE_PASSWORD=changeit
+NOTIFY_API_KEY="sidam_sandbox-b7ab8862-25b4-41c9-8311-cb78815f7d2d-1f3ed33e-7fb8-4c42-912f-a8300b78340f"
 
 
 # IDM replace placeholders with variables
-for file in ./idm/conf/*.json; do
+for file in ./idm/conf/*; do
   search-and-replace "{{ psql_host }}" "$POSTGRES_HOST" "$file"
   search-and-replace "{{ psql_port }}" "$POSTGRES_PORT" "$file"
   search-and-replace "{{ openidm_repo_port }}" "$POSTGRES_PORT" "$file"
@@ -286,8 +281,12 @@ for file in ./idm/conf/*.json; do
   search-and-replace "{{ email_username }}" "$EMAIL_USERNAME" "$file"
   search-and-replace "{{ email_pword }}" "$EMAIL_PASSWORD" "$file"
   search-and-replace "{{ welcome_email_enabled|lower }}" "$WELCOME_EMAIL_ENABLED" "$file"
+  search-and-replace "{{ idam_path }}" "$IDAM_PATH" "$file"
+  search-and-replace "{{ rootUserPassword }}" "$KEYSTORE_PASSWORD" "$file"
 
 done
+  #TODO change so the notify.api.key property is passed to java rather than replaced here
+  search-and-replace "System.properties\[\x27notify.api.key\x27\]" "\"$NOTIFY_API_KEY\"" "./idm/script/notify.groovy"
 
 echo "OK"
 
