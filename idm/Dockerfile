@@ -19,11 +19,11 @@ RUN rm -f conf/repo.ds.json
 RUN rm -rf script
 
 COPY import_internal_roles.sh .
-COPY conf conf
+COPY build/conf conf
+COPY build/script script
+COPY build/conf/startup.sh startup.sh
 COPY security security
-COPY script script
 COPY lib lib
 COPY bundle bundle
-COPY conf/startup.sh startup.sh
 
 ENTRYPOINT ["/run.sh" ]

@@ -9,7 +9,7 @@
 ds/bootstrap/
 ds/secrets/
 am/openam_conf/config_files/
-idm/script/
+idm/build
 
 # Personal ignores
 # ================
