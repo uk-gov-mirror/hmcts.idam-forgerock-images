@@ -116,6 +116,9 @@ search-and-replace "\"org.forgerock.services.cts.store.ssl.enabled\" : true" "\"
 search-and-replace "\"sun-idrepo-ldapv3-config-connection-mode\" : \"LDAPS\"" "\"sun-idrepo-ldapv3-config-connection-mode\" : \"AMSTER{ldapProtocol}\"" "./am/openam_conf/config_files/realms/root-hmcts/OpenDJ/OpenDJ.json"
 search-and-replace "forgerock-ds-userstore-2.AMSTER{domainSuffix}:AMSTER{ds_user_port}|server1" "AMSTER{ds_user_host}:AMSTER{ldapcfgUserStorePort}" "./am/openam_conf/config_files/realms/root-hmcts/OpenDJ/OpenDJ.json"
 
+# Customize openam auth hotp jar file
+bash ./am/customize_jar.sh
+
 build-docker-image "am"
 
 # ========================

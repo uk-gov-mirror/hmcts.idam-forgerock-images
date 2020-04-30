@@ -89,7 +89,12 @@ RUN echo "tomcat ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/tomcat && \
 # Settings for Tomcat
 ADD tomcat_conf/server.xml "$CATALINA_HOME"/conf/server.xml
 ADD tomcat_conf/context.xml "$CATALINA_HOME"/conf/context.xml
+ADD tomcat_conf/setenv.sh "$CATALINA_HOME"/bin/setenv.sh
 #ADD secrets/keystore.jceks "$CATALINA_HOME"/.keystore
+
+# Copy jars
+ADD tomcat_conf/lib/idam-forgerock-notify-client-1.4.1.jar "$CATALINA_HOME"/webapps/openam/WEB-INF/lib/idam-forgerock-notify-client-1.4.1.jar
+ADD tomcat_conf/build/openam-auth-hotp-6.5.2.2.jar "$CATALINA_HOME"/webapps/openam/WEB-INF/lib/openam-auth-hotp-6.5.2.2.jar
 
 
 ADD openam_conf/*.amster "$FORGEROCK_HOME"/amster/

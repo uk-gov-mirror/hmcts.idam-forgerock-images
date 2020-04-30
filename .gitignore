@@ -9,6 +9,7 @@
 ds/bootstrap/
 ds/secrets/
 am/openam_conf/config_files/
+am/tomcat_conf/build
 idm/build
 
 # Personal ignores
