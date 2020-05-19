@@ -68,12 +68,12 @@ function prepare() {
   header "Cleaning up leftover files from the previous run..."
   rm -r ./am/openam_conf/config_files ./am/openam_conf/amster.zip ./am/openam_conf/openam.war
   rm -r ./ds/opendj.zip ./ds/secrets ./ds/bootstrap
-  rm -r "./idm/$FORGEROCK_IDM_FILE" ./idm/conf/* ./idm/script/*
+  rm -r "./idm/$FORGEROCK_IDM_FILE" ./idm/build/*
   echo "OK"
 }
 
 function search-and-replace() {
-  sed -i  "s/$1/$2/" "$3" || exit 1
+   perl -p -i -e 's/'"$1"'/'"$2"'/g' $3
 }
 
 # checks for the files still containing {{
@@ -202,7 +202,7 @@ build-docker-image "ds"
 
 header "Building IDM config.."
 
-bash ./idm/build_config.sh
+./idm/build_config.sh
 
 echo "OK"
 
