@@ -1,7 +1,7 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 function search-and-replace() {
-  sed -i  "s/$1/$2/" "$3" || exit 1
+ perl -p -i -e 's/'"$1"'/'"$2"'/g' $3
 }
 
 echo "Copying IDM configuration files.."
@@ -36,12 +36,6 @@ cp $IDM_SRC/templates/access.js.j2 ./idm/build/script/access.js || exit 1
 cp $IDM_SRC/templates/notify.groovy.j2 ./idm/build/script/notify.groovy || exit 1
 cp $IDM_SRC/templates/audit.json.j2 ./idm/build/conf/audit.json || exit 1
 cp $IDM_SRC/templates/startup.sh.j2 ./idm/build/conf/startup.sh || exit 1
-
-# remove lines starting with {%
-sed -i '/^{%/ d' ./idm/build/script/sunset.js || exit 1
-sed -i '/^{%/ d' ./idm/build/conf/schedule-reconcile-roles.json || exit 1
-sed -i '/^{%/ d' ./idm/build/conf/schedule-reconcile-accounts.json || exit 1
-sed -i '/^{%/ d' ./idm/build/conf/schedule-sunset-task.json  || exit 1
 
 # IDM variables
 POSTGRES_HOST="shared-db"
@@ -81,7 +75,7 @@ for file in ./idm/build/conf/*; do
   search-and-replace "forgerock-ds-userstore-2.{{ domainSuffix }}" "$USERSTORE_HOST" "$file"
   search-and-replace "{{ userStorePort }}" "$USERSTORE_PORT" "$file"
   search-and-replace "{{ icf_pword }}" "$DM_PASSWORD" "$file"
-  search-and-replace "?ssl=true" "" "$file"
+  search-and-replace "\?ssl=true" "" "$file"
   search-and-replace "\"ssl\" : true" "\"ssl\" : false" "$file"
   search-and-replace "{{ email_host }}" "$EMAIL_HOST" "$file"
   search-and-replace "{{ email_port }}" "$EMAIL_PORT" "$file"
@@ -90,8 +84,13 @@ for file in ./idm/build/conf/*; do
   search-and-replace "{{ welcome_email_enabled|lower }}" "$WELCOME_EMAIL_ENABLED" "$file"
   search-and-replace "{{ idam_path }}" "$IDAM_PATH" "$file"
   search-and-replace "{{ rootUserPassword }}" "$KEYSTORE_PASSWORD" "$file"
+  search-and-replace "{% raw %}" "" "$file"
+  search-and-replace "{% endraw %}" "" "$file"
 
 done
+
+  search-and-replace "{% raw %}" "" "./idm/build/script/sunset.js"
+  search-and-replace "{% endraw %}" "" "./idm/build/script/sunset.js"
   #TODO change so the notify.api.key property is passed to java rather than replaced here
   search-and-replace "System.properties\[\x27notify.api.key\x27\]" "\"$NOTIFY_API_KEY\"" "./idm/build/script/notify.groovy"
 
