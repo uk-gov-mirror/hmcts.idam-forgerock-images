@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 function search-and-replace() {
-  sed -i  "s/$1/$2/" "$3" || exit 1
+  perl -p -i -e 's/'"$1"'/'"$2"'/g' $3
 }
 
 mkdir -p ./am/tomcat_conf/build/openam-auth-hotp/ || exit 1
