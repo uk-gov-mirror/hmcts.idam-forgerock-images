@@ -51,7 +51,7 @@ USERSTORE_PORT="1389";
 DM_PASSWORD="Pa55word11";
 EMAIL_HOST="smtp-server";
 EMAIL_PORT="1025";
-EMAIL_USERNAME="amido.idam@gmail.com";
+EMAIL_USERNAME="amido.idam\@gmail.com";
 EMAIL_PASSWORD="";
 WELCOME_EMAIL_ENABLED="false";
 IDAM_PATH="\/opt"
@@ -81,7 +81,7 @@ for file in ./idm/build/conf/*; do
   search-and-replace "{{ email_port }}" "$EMAIL_PORT" "$file"
   search-and-replace "{{ email_username }}" "$EMAIL_USERNAME" "$file"
   search-and-replace "{{ email_pword }}" "$EMAIL_PASSWORD" "$file"
-  search-and-replace "{{ welcome_email_enabled|lower }}" "$WELCOME_EMAIL_ENABLED" "$file"
+  search-and-replace "{{ welcome_email_enabled\|lower }}" "$WELCOME_EMAIL_ENABLED" "$file"
   search-and-replace "{{ idam_path }}" "$IDAM_PATH" "$file"
   search-and-replace "{{ rootUserPassword }}" "$KEYSTORE_PASSWORD" "$file"
   search-and-replace "{% raw %}" "" "$file"
