@@ -1,67 +1,128 @@
-# IDAM ForgeRock Images Builder
 
-The goal of this script is to build Docker images containing ForgeRock used for local development.
-The following images/services are included:
+These images are only for local development and are provided as-is.
+Any use outside of this purpose comes with no guarantees and support.
 
-- ForgeRock AM
-- ForgeRock DS
-- ForgeRock IDM
-- Postgres shared database
 
-This repository uses the `cnp-idam-packer` repository (as git submodule) to source the FR configuration from.
+The goal of this project(idam-forgerock-images) is to build Docker images containing ForgeRock used for local development. The following images/services are included:
 
-## Prerequisites
+ForgeRock AM
+ForgeRock DS
+ForgeRock IDM
+Postgres shared database
+This repository uses the cnp-idam-packer repository (as git submodule) to source the FR configuration from.
 
-In order to build the images you have to put binary ForgeRock files in the `bin/` directory first.
+Prerequisites
+The docker files and related build scripts can be found in the following project on the hmcts github, clone this project to a local directory.
+
+https://github.com/hmcts/idam-forgerock-images
+
+Please checkout the following branch feature/SIDM-3500
+
+You will need the below tools installed on your local system
+
+docker
+docker-compose
+If using windows please use a linux terminal (e.g. cygwin) to execute any scripts in the following sections
+
+In order to build the images you have to put the below ForgeRock binary files in the idam-forgerock-images/bin directory of the idam-forgerock-images project first.
 
 The required files are:
-- `AM-x.x.x.x.war`
-- `Amster-x.x.x.x.zip`
-- `DS-x.x.x.zip`
-- `IDM-x.x.x.x.zip`
 
-You can download these files from [https://backstage.forgerock.com/downloads/](https://backstage.forgerock.com/downloads/).
+AM-6.5.2.2.war
+Amster-6.5.2.2.zip
+DS-6.5.2.zip
+IDM-6.5.0.2.zip
 
-## Usage
+You can download these files from Forgerock Backstage Download
 
-### Running the script
+Usage
+Running the script
 
-Currently, the script doesn't require any parameters:
+To build the docker images execute the following build script from the root directory of the idam-forgerock-images project
 
-`> ./build.sh`
+  ./build.sh
+Important
 
-### Overriding the default configuration branch
+Please check the following script in the idam-forgerock-images/idm directory have executable permissions before running the build.sh script
 
-By default, the script assumes that the configuration is taken from the `preview` branch of the config repository.
-If the currently checked-out branch in the git submodule is not what is expected, the script will stop. The script will also quietly ignore all the local changes to the repository.
+build_config.sh
+import_internal_roles.sh
+ If they don't please change the file to permission to executable using chmod +x
+
+.
+
+Running containers
+
+To run the containers execute the following docker-compose command from the root directory of the idam-forgerock-images project
+
+  docker-compose -f docker-compose.yml -f docker-compose-local.yml up
+
+
+Below is the list of applications and the ports and credentials used to access them.
+
+IDM
+
+Port : 8081 
+
+Username: openidm
+
+Password: openidm
+
+AM
+
+Please add the following host mappings to your local hosts file, and make sure to access AM using the host name and not localhost.
+
+localhost  fr-am.local 
+Port: 8181
+
+Username: amadmin
+
+Password: Pa55word11
+
+DS
+
+Config/Token Store
+
+Port: 7389
+
+Identity store
+
+Port: 9389
+
+Username: cn=Directory Manager
+
+Password: Pa55word11
+
+Connecting local idam api to local forgerock images
+To get the local forgerock images working with idam-api use the following application-local.yaml
+
+
+
+Place this file in the following directory idam-api\idam-api\src\main\resources\
+
+Before starting up idam-api  use the following spring profile setting -Dspring.profiles.active=local
+
+
+
+Overriding the default configuration branch
+By default, the script assumes that the configuration is taken from the preview branch of the config repository. If the currently checked-out branch in the git submodule is not what is expected, the script will stop. The script will also quietly ignore all the local changes to the repository.
 
 If you want to use another branch, you can override this env variable:
 
-```shell script
 CONFIGURATION_BRANCH=master ./build.sh
-```
 
-### Overriding the default binaries versions
+Overriding the default binaries versions
+By default, the script assumes that individual ForgeRock's services' binaries use certain fixed file names. You can temporarily override these by supplying different values for the following env variables:
 
-By default, the script assumes that individual ForgeRock's services' binaries use certain fixed file names.
-You can temporarily override these by supplying different values for the following env variables:
-
-```shell script
-FORGEROCK_AM_FILE=my-am-file-name \
-FORGEROCK_AMSTER_FILE=my-amster-file-name \
-FORGEROCK_DS_FILE=my-ds-file-name \
-FORGEROCK_IDM_FILE=my-idm-file-name \
-./build.sh
-```
+FORGEROCK_AM_FILE=my-am-file-name \ FORGEROCK_AMSTER_FILE=my-amster-file-name \ FORGEROCK_DS_FILE=my-ds-file-name \ FORGEROCK_IDM_FILE=my-idm-file-name \ ./build.sh
 
 If you want to change the versions permanently (e.g. FR upgrade), it is recommended to modify the script instead.
 
-### Overriding the default Docker tag
+Overriding the default Docker tag
+By default, the script tags all the Docker images using fr-local prefix. You can override it by setting the following env variable:
 
-By default, the script tags all the Docker images using `fr-local` prefix. You can override it by setting the following env variable:
-
-```shell script
 DOCKER_IMAGE_PREFIX=my-local-forgerock ./build.sh
-```
 
-The script additionally tags all the images with `latest`, which is used in the provded `docker-compose` file(s).
+
+
+
