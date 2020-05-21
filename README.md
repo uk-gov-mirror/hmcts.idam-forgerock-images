@@ -1,8 +1,3 @@
-
-These images are only for local development and are provided as-is.
-Any use outside of this purpose comes with no guarantees and support.
-
-
 The goal of this project(idam-forgerock-images) is to build Docker images containing ForgeRock used for local development. The following images/services are included:
 
 ForgeRock AM
