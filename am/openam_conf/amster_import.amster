@@ -1,0 +1,60 @@
+
+amHttpProtocol=System.getenv("HTTP_STRING")
+ldapProtocol=System.getenv("LDAP_PROTOCOL")
+
+
+//
+ctsHost=System.getenv("CTS_CFG_HOSTS")
+cfgUserStoreHost=System.getenv("CFG_STORE_HOST")
+ldapCtsPort=System.getenv("CTS_PORT")
+ldapcfgUserStorePort=System.getenv("USER_STORE_PORT")
+amHost=System.getenv("EXT_HOSTNAME")
+amHostPort=System.getenv("AM_HTTP_PORT")
+
+realms_aliases=System.getenv("EXT_HOSTNAME")
+
+hostname=System.getenv("EXT_HOSTNAME")
+
+// FROM PACKER
+amsterVersion=System.getenv("AMSTER_VERSION")
+externalHostname=System.getenv("EXT_HOSTNAME")
+serverHostname=System.getenv("ANSIBLE_HOSTNAME")+"."+System.getenv("DOMAINSUFFIX")
+hmcts_realm_dns_alias=System.getenv("EXT_HOSTNAME")
+servername_access="http://"+System.getenv("ANSIBLE_HOSTNAME")+"."+System.getenv("DOMAINSUFFIX")+":"+System.getenv("AM_HTTP_PORT")+"/"+System.getenv("FR_APP")
+ds_user_host=System.getenv("USER_STORE_HOST")
+ds_cfg_host=System.getenv("CFG_STORE_HOST")
+ds_user_port=System.getenv("USER_STORE_PORT")
+ds_cfg_port=System.getenv("CFG_STORE_PORT")
+primaryLdapServer=System.getenv("USER_STORE_HOST")  +":" +  System.getenv("USER_STORE_PORT")
+baseDN=System.getenv("BASE_DN")
+cts_cfg_hosts=System.getenv("CTS_CFG_HOSTS") +":" +  System.getenv("CTS_PORT")
+rootUserDN=System.getenv("ROOT_USER_DN")
+rootUserPassword=System.getenv("ROOT_USER_PASSWORD")
+cts_token_baseDN=System.getenv("CTS_TOKEN_BASEDN")
+openam_cts_password=System.getenv("OPENAM_CTS_PASSWORD")
+openam_cts_username_uid=System.getenv("OPENAM_CTS_USERNAME_UID")
+ldapServerPort=System.getenv("LDAPS_PORT_CTS")
+ConfirmationUrl="https://"+System.getenv("EXT_HOSTNAME")+":"+ System.getenv("AM_HTTP_PORT")+"/"+ System.getenv("FR_APP") + "/XUI/confirm.html"
+lbFqdn=System.getenv("EXT_HOSTNAME")+".local"
+amBootstrapFile=System.getenv("AM_BOOTSTRAP_FILE")
+openam_dir=System.getenv("OPENAM_DIR")
+project=System.getenv("PROJECT")
+web_app=System.getenv("WEB_APP")
+default_keystore_type=System.getenv("DEFAULT_KEYSTORE_TYPE")
+default_provider_name=System.getenv("DEFAULT_KEYSTORE_PROVIDER_NAME")
+certificate_alias_name=System.getenv("CERTIFICATE_ALIAS_NAME")
+am_cookie_name=System.getenv("AM_COOKIE_NAME")
+pwdEncKey=System.getenv("PWD_ENC_KEY")
+OAuth2ClientConfigPwd=System.getenv("OAUTH_2CLIENT_CONFIG_PWD")
+jwkUri="https://" + System.getenv("EXT_HOSTNAME") + ":8080/openam/oauth2/hmcts/connect/jwk_uri"
+ssoProxyUrl="https://"+System.getenv("ANSIBLE_HOSTNAME")+"."+System.getenv("DOMAINSUFFIX")+":"+System.getenv("AM_HTTP_PORT")+"/openam/oauth2c/OAuthProxy.jsp"
+
+
+serverUrl="http://"+System.getenv("OPENAM_HOSTNAME")+":8080/openam"
+amsterKey=System.getenv("FORGEROCK_HOME")+"/openam/amster_rsa"
+amsterConfigFiles=System.getenv("FORGEROCK_HOME")+"/amster/config_files"
+
+
+connect -k amsterKey serverUrl
+import-config --path amsterConfigFiles
+:exit

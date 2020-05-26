@@ -1,1 +1,22 @@
 .idea/
+.iml
+
+# Forbid binary files in the repository, these need to be copied in manually
+**/*.war
+**/*.zip
+
+# Forbid any configuration files that are due to be copied in by the script
+ds/bootstrap/
+ds/secrets/
+am/openam_conf/config_files/
+am/tomcat_conf/build
+idm/build
+
+# Personal ignores
+# ================
+
+# Rad
+*id_rsa
+*id_rsa.pub
+forgeops/
+forgeops-config/
