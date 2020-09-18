@@ -28,7 +28,13 @@ Amster-6.5.2.2.zip
 DS-6.5.2.zip
 IDM-6.5.0.2.zip
 
-You can download these files from Forgerock Backstage Download
+You can download these files from Forgerock Backstage Download:
+https://backstage.forgerock.com/downloads/browse/am/archive/productId:am/minorVersion:6.5/version:6.5.2.2
+https://backstage.forgerock.com/downloads/browse/am/archive/productId:amster/minorVersion:6.5/version:6.5.2.2/releaseType:full
+https://backstage.forgerock.com/downloads/browse/ds/archive/productId:ds/minorVersion:6.5/version:6.5.2
+https://backstage.forgerock.com/downloads/browse/ig/archive/productId:ig/minorVersion:6.5
+
+You can also find them in Azure idamstoragenonprod: https://portal.azure.com/#blade/Microsoft_Azure_Storage/ContainerMenuBlade/overview/storageAccountId/%2Fsubscriptions%2F1c4f0704-a29e-403d-b719-b90c34ef14c9%2FresourceGroups%2Fcore-infra-idam-storage%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Fidamstoragenonprod/path/idamstoragenonprod/etag/%220x8D5B08324BE4216%22/defaultEncryptionScope/%24account-encryption-key/denyEncryptionScopeOverride//defaultId//publicAccessVal/None
 
 Usage
 Running the script
