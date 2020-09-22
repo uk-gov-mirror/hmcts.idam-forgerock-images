@@ -48,6 +48,9 @@ pwdEncKey=System.getenv("PWD_ENC_KEY")
 OAuth2ClientConfigPwd=System.getenv("OAUTH_2CLIENT_CONFIG_PWD")
 jwkUri="https://" + System.getenv("EXT_HOSTNAME") + ":8080/openam/oauth2/hmcts/connect/jwk_uri"
 ssoProxyUrl="https://"+System.getenv("ANSIBLE_HOSTNAME")+"."+System.getenv("DOMAINSUFFIX")+":"+System.getenv("AM_HTTP_PORT")+"/openam/oauth2c/OAuthProxy.jsp"
+log_dir="/opt/tomcat/logs/"
+notification_email_2fa_templateId_en=System.getenv("NOTIFY_TEMPLATE_2FA_EN")
+notification_email_2fa_templateId_cy=System.getenv("NOTIFY_TEMPLATE_2FA_CY")
 
 
 serverUrl="http://"+System.getenv("OPENAM_HOSTNAME")+":8080/openam"

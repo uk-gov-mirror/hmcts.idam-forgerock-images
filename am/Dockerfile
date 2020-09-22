@@ -55,6 +55,8 @@ ENV AM_COOKIE_NAME Idam.Session
 #ENV AM_COOKIE_NAME iPlanetDirectoryPro
 ENV PWD_ENC_KEY Y3pQSnFUTG1pTFMza2R6Y1FNNTdkeUxNcnVQdEJUZU4=
 ENV OAUTH_2CLIENT_CONFIG_PWD password
+ENV NOTIFY_TEMPLATE_2FA_EN "67ace669-93b5-4055-88b2-c136c63c5510"
+ENV NOTIFY_TEMPLATE_2FA_CY "eb783a35-6f60-470d-a5ed-d7a6be6d0e6d"
 
 ADD openam_conf/openam.war  /tmp/openam.war
 ADD openam_conf/amster.zip /tmp/amster.zip
@@ -93,8 +95,9 @@ ADD tomcat_conf/setenv.sh "$CATALINA_HOME"/bin/setenv.sh
 #ADD secrets/keystore.jceks "$CATALINA_HOME"/.keystore
 
 # Copy jars
-ADD tomcat_conf/lib/idam-forgerock-notify-client-1.4.1.jar "$CATALINA_HOME"/webapps/openam/WEB-INF/lib/idam-forgerock-notify-client-1.4.1.jar
+ADD tomcat_conf/lib/idam-forgerock-notify-client-1.5.0.jar "$CATALINA_HOME"/webapps/openam/WEB-INF/lib/idam-forgerock-notify-client-1.5.0.jar
 ADD tomcat_conf/build/openam-auth-hotp-6.5.2.2.jar "$CATALINA_HOME"/webapps/openam/WEB-INF/lib/openam-auth-hotp-6.5.2.2.jar
+#ADD tomcat_conf/lib/idam-auth-tree-1.0.0-SNAPSHOT.jar "$CATALINA_HOME"/webapps/openam/WEB-INF/lib/idam-auth-tree-1.0.0-SNAPSHOT.jar
 
 
 ADD openam_conf/*.amster "$FORGEROCK_HOME"/amster/
