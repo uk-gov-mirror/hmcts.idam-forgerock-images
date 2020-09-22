@@ -65,9 +65,9 @@ IDM
 
 Port : 8081 
 
-Username: openidm
+Username: openidm-admin
 
-Password: openidm
+Password: openidm-admin
 
 AM
 
