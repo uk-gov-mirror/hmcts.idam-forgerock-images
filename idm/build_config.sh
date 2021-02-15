@@ -51,13 +51,18 @@ USERSTORE_PORT="1389";
 DM_PASSWORD="Pa55word11";
 EMAIL_HOST="smtp-server";
 EMAIL_PORT="1025";
-EMAIL_USERNAME="amido.idam\@gmail.com";
+EMAIL_USERNAME="idam\@gmail.com";
 EMAIL_PASSWORD="";
 WELCOME_EMAIL_ENABLED="false";
 IDAM_PATH="\/opt"
 KEYSTORE_PASSWORD=changeit
 NOTIFY_API_KEY="sidam_sandbox-b7ab8862-25b4-41c9-8311-cb78815f7d2d-1f3ed33e-7fb8-4c42-912f-a8300b78340f"
-
+REGISTRATION_EN_TEMPLATEID="dfbe74e8-cc81-4d1f-ae9a-21baa228bdc8"
+REGISTRATION_CY_TEMPLATEID="191f1708-b5fa-4bc3-a8f7-9745bc6056b8"
+PWDRESET_EN_TEMPLATEID="a3f18f78-bb9a-47f9-9421-dd4cbf33ddc9"
+PWDRESET_CY_TEMPLATEID="f2fa6268-abd3-4702-ba3c-c1add04e3d45"
+REREGISTRATION_EN_TEMPLATEID="2a705a73-f02b-4259-bd6d-e2a16b5b3860"
+REREGISTRATION_CY_TEMPLATEID="f9b54604-a99d-4c09-b786-2b5a75ab51aa"
 
 # IDM replace placeholders with variables
 for file in ./idm/build/conf/*; do
@@ -86,12 +91,17 @@ for file in ./idm/build/conf/*; do
   search-and-replace "{{ rootUserPassword }}" "$KEYSTORE_PASSWORD" "$file"
   search-and-replace "{% raw %}" "" "$file"
   search-and-replace "{% endraw %}" "" "$file"
-
 done
 
   search-and-replace "{% raw %}" "" "./idm/build/script/sunset.js"
   search-and-replace "{% endraw %}" "" "./idm/build/script/sunset.js"
   #TODO change so the notify.api.key property is passed to java rather than replaced here
   search-and-replace "System.properties\[\x27notify.api.key\x27\]" "\"$NOTIFY_API_KEY\"" "./idm/build/script/notify.groovy"
+  search-and-replace "{{ registration_en_templateId }}" "$REGISTRATION_EN_TEMPLATEID" "./idm/build/script/notify.groovy"
+  search-and-replace "{{ registration_cy_templateId }}" "$REGISTRATION_CY_TEMPLATEID" "./idm/build/script/notify.groovy"
+  search-and-replace "{{ pwdReset_en_templateId }}" "$PWDRESET_EN_TEMPLATEID" "./idm/build/script/notify.groovy"
+  search-and-replace "{{ pwdReset_cy_templateId }}" "$PWDRESET_CY_TEMPLATEID" "./idm/build/script/notify.groovy"
+  search-and-replace "{{ reregistration_en_templateId }}" "$REREGISTRATION_EN_TEMPLATEID" "./idm/build/script/notify.groovy"
+  search-and-replace "{{ reregistration_cy_templateId }}" "$REREGISTRATION_CY_TEMPLATEID" "./idm/build/script/notify.groovy"
 
 echo "OK"

@@ -18,7 +18,7 @@ USER postgres
 ADD sql/*.sql /docker-entrypoint-initdb.d/
 ADD *.sh /
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+#ENTRYPOINT ["/docker-entrypoint.sh"]
 #CMD ["start"]
 
 

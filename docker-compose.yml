@@ -15,14 +15,14 @@ services:
   fr-idm:
     image: fr-local-idm:latest
     hostname: fr-idm
+    depends_on:
+     - shared-db
   fr-am.local:
     image: fr-local-am:latest
     hostname: fr-am.local
     depends_on:
      - userstore
      - cfgAndCts
-#  shared-db:
-#    image: hmctsprivate.azurecr.io/idam/shared-db:latest
   shared-db:
     image: fr-local-postgres:latest
     restart: always

@@ -20,3 +20,4 @@ idm/build
 *id_rsa.pub
 forgeops/
 forgeops-config/
+.DS_Store

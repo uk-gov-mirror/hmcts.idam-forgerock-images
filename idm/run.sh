@@ -13,7 +13,7 @@ IDAM_TEST_USER_ID='566fabc2-ea7d-4f8c-beca-f9cba6483eb7'
 
 adding_default_user(){
 
-  echo "------- starting ping"
+  echo "[run.sh] ------- starting ping"
   readyToTest=true
 
   while $readyToTest
@@ -21,19 +21,19 @@ adding_default_user(){
       curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --request GET "${IDM_URL}/info/ping" | grep ACTIVE_READY
       if [ $? = 0 ];
       then
-        echo "IDM is up"
+        echo "[run.sh] IDM is up"
         readyToTest=false
         break
       else
-        echo "let's wait...."
+        echo "[run.sh] let's wait...."
         sleep 10
       fi
   done
 
 
-  echo "let s create roles"
+  echo "[run.sh] creating roles"
   /opt/openidm/import_internal_roles.sh
-  echo "lets create users"
+  echo "[run.sh] creating users"
   curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --header "If-None-Match: *" --request PUT --data "${IDAM_OWNER_USER}" "${IDM_URL}/managed/user/${IDAM_OWNER_USER_ID}"
   curl -k -sS -H "${IDM_JSN}" -H "${IDM_USR}" -H "${IDM_PWD}" --header "If-None-Match: *" --request PUT --data "${IDAM_TEST_USER}" "${IDM_URL}/managed/user/${IDAM_TEST_USER_ID}"
   echo "lets add roles to users"
@@ -43,14 +43,14 @@ adding_default_user(){
 
 }
 
-echo "starting idm!"
+echo "[run.sh] starting idm!"
 
 if [ -z "$(ls -A /opt/openidm/logs)" ]; then
-   echo "First installation. let's sleep..."
-   sleep 180
+   echo "[run.sh] First installation. let's sleep..."
+   sleep 10
    adding_default_user & /opt/openidm/startup.sh --thread
 else
-   echo "Configuration is there!"
+   echo "[run.sh] Configuration is there!"
    /opt/openidm/startup.sh --thread
 fi
 

@@ -53,7 +53,7 @@ ldif=""$OPENDJ_ROOT"/$1"
   --set default-password-storage-scheme:"Salted SHA-512" \
   --no-prompt
 
-echo "#Enable SSL [localhost]"
+echo "[run.sh] #Enable SSL [localhost]"
 "$OPENDJ_ROOT"/bin/dsconfig  \
   --hostname $DSHOSTNAME \
   --port "$ADMIN_PORT" \
@@ -94,9 +94,9 @@ echo "#Enable SSL [localhost]"
   --no-prompt
 
   if [ -d "$ldif" ]; then
-      echo "Loading LDIF files in $ldif"
+      echo "[run.sh] Loading LDIF files in $ldif"
       for file in "${ldif}"/*.ldif;  do
-          echo "$USER Loading $file"
+          echo "[run.sh] $USER Loading $file"
           # search + replace all placeholder variables. Naming conventions are from AM.
           sed -e "s/@BASE_DN@/$BASE_DN/" <${file}  >/tmp/file.ldif
 
@@ -108,7 +108,7 @@ echo "#Enable SSL [localhost]"
 
 update_env_variable(){
 
-  echo "update environment variables"
+  echo "[run.sh] update environment variables"
   cd $1
   pwd
   grep -rl '{{ baseDN }}' *.* | xargs sed -i'' 's/{{ baseDN }}/'$BASE_DN'/'
@@ -147,18 +147,18 @@ run_ldif_cfg_cts(){
   --set default-password-storage-scheme:"Salted SHA-512" \
   --no-prompt
 
-  echo "do I need to sleep?"
+  echo "[run.sh] do I need to sleep?"
 
   # shellcheck disable=SC1065
   update_env_variable $CFG_SCRIPTS
   cd $CFG_SCRIPTS
 
-  echo "try to run CFG 00-runme.sh script"
+  echo "[run.sh] try to run CFG 00-runme.sh script"
   ./00-runme.sh
 
   update_env_variable $CTS_SCRIPTS
   cd $CTS_SCRIPTS
-  echo "try to run CTS 00-runme.sh script"
+  echo "[run.sh] try to run CTS 00-runme.sh script (second attempt)"
   ./00-runme.sh
 
 }
@@ -182,7 +182,7 @@ cd /opt/opendj
   --acceptLicense \
   --addBaseEntry
 
-echo "import keystore"
+echo "[run.sh] import keystore"
 keytool -importkeystore \
         -srckeystore $OPENDJ_ROOT/secrets/keystore.pkcs12 \
         -srcstoretype PKCS12 \
@@ -195,19 +195,19 @@ keytool -importkeystore \
         -destalias server-cert \
         -no-prompt
 
-echo "depending on the DS_TYPE env variable defined in the composer file, a different profile is selected"
+echo "[run.sh] depending on the DS_TYPE env variable defined in the composer file, a different profile is selected"
 #replace_ansible_variables
 case "$DS_TYPE" in
           "userstore")
-            echo "install DS as userStore and config store"
+            echo "[run.sh] install DS as userStore and config store"
             run_userstore_config user_store
             ;;
           "cfgAndCts")
-            echo "install Config store and CTS"
+            echo "[run.sh] install Config store and CTS"
             run_ldif_cfg_cts
             ;;
           *)
-            echo "if you read this message, there's something wrong.... This should not be trigger!!!"
+            echo "[run.sh] if you read this message, there's something wrong.... This should not be trigger!!!"
             ;;
 esac
 
@@ -220,7 +220,7 @@ esac
 ## displaing the status on logs: it's not needed but it's useful on local env
 "$OPENDJ_ROOT"/bin/status --offline
 
-echo "restart OpenDJ"
+echo "[run.sh] restart OpenDJ"
 INSTANCE_ROOT="$OPENDJ_ROOT"/
 # instance.loc points DJ at the data/ volume
 echo $INSTANCE_ROOT >"$OPENDJ_ROOT"/instance.loc

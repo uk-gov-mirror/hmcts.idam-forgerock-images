@@ -97,7 +97,7 @@ ADD tomcat_conf/setenv.sh "$CATALINA_HOME"/bin/setenv.sh
 # Copy jars
 ADD tomcat_conf/lib/idam-forgerock-notify-client-1.5.0.jar "$CATALINA_HOME"/webapps/openam/WEB-INF/lib/idam-forgerock-notify-client-1.5.0.jar
 ADD tomcat_conf/build/openam-auth-hotp-6.5.2.2.jar "$CATALINA_HOME"/webapps/openam/WEB-INF/lib/openam-auth-hotp-6.5.2.2.jar
-#ADD tomcat_conf/lib/idam-auth-tree-1.0.0-SNAPSHOT.jar "$CATALINA_HOME"/webapps/openam/WEB-INF/lib/idam-auth-tree-1.0.0-SNAPSHOT.jar
+ADD tomcat_conf/lib/idam-forgerock-auth-tree-node-1.0.1.jar "$CATALINA_HOME"/webapps/openam/WEB-INF/lib/idam-forgerock-auth-tree-node-1.0.1.jar
 
 
 ADD openam_conf/*.amster "$FORGEROCK_HOME"/amster/
